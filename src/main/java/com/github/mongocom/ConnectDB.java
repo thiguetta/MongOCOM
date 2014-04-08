@@ -45,8 +45,8 @@ public class ConnectDB {
     public static ConnectDB connectToServer(String host, int port) {
         return new ConnectDB(host, port);
     }
-    
-    public DB getDB(String dbname){
+
+    public DB getDB(String dbname) {
         return client.getDB(dbname);
     }
 
