@@ -151,4 +151,8 @@ public class CollectionManagerTest {
         }
         //Logger.getLogger(CollectionManagerTest.class.getName()).log(Level.INFO, "Objeto {0} salvo com sucesso.",result);
     }
+
+    public void close() {
+        db.getMongo().close();
+    }
 }
