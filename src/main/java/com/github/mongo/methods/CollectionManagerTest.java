@@ -48,11 +48,14 @@ public class CollectionManagerTest {
             } else {
                 resultDB = db.getCollection(collName).find();
             }
+            if (query.getSkip() > 0) {
+                resultDB = resultDB.skip(query.getSkip());
+            }
+            if (query.getLimit() > 0) {
+                resultDB = resultDB.limit(query.getLimit());
+            }
             while (resultDB.hasNext()) {
                 DBObject objDB = resultDB.next();
-                if (objDB == null) {
-                    return null;
-                }
                 Field[] fields = obj.getClass().getDeclaredFields();
                 for (Field f : fields) {
                     f.setAccessible(true);

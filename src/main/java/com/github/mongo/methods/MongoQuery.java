@@ -15,6 +15,8 @@ public class MongoQuery {
 
     private BasicDBObject query;
     private BasicDBObject constraits;
+    private int limit;
+    private int skip;
 
     public MongoQuery() {
         query = new BasicDBObject();
@@ -84,6 +86,22 @@ public class MongoQuery {
 
     public BasicDBObject getConstraits() {
         return constraits;
+    }
+
+    public int getLimit() {
+        return limit;
+    }
+
+    public void limit(int limit) {
+        this.limit = limit;
+    }
+
+    public int getSkip() {
+        return skip;
+    }
+
+    public void skip(int skip) {
+        this.skip = skip;
     }
 
     public String getQueryJson() {
