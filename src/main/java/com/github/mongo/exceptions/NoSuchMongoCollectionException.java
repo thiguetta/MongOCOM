@@ -4,12 +4,16 @@
  * and open the template in the editor.
  */
 
-package mongo.annotations.Impl;
+package com.github.mongo.exceptions;
 
 /**
  *
  * @author thiago
  */
-public class NewClass {
+public class NoSuchMongoCollectionException extends Exception{
+
+    public NoSuchMongoCollectionException(String message) {
+        super(message);
+    }
     
 }
