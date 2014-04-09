@@ -28,10 +28,14 @@ public class ConnectDB {
         Logger.getLogger(ConnectDB.class.getName()).log(Level.INFO, "Connected to {0}", client.getAddress());
 
     }
-
+    
     private ConnectDB(String host, int port) {
         try {
-            client = new Mongo(host, port);
+            if (port == 0) {
+                client = new Mongo(host);
+            } else {
+                client = new Mongo(host, port);
+            }
         } catch (UnknownHostException ex) {
             Logger.getLogger(ConnectDB.class.getName()).log(Level.SEVERE, "Server not found at {0}:{1}.", new Object[]{host, port});
         }
