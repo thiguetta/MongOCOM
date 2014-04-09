@@ -33,12 +33,21 @@ public class CollectionManagerTest {
     }
 
     public <A extends Object> List<A> find(Class<A> collectionClass) {
+        return find(collectionClass, null);
+    }
+
+    public <A extends Object> List<A> find(Class<A> collectionClass, MongoQuery query) {
         List<A> resultSet = new ArrayList<>();
+        DBCursor resultDB;
         try {
             A obj = collectionClass.newInstance();
             Annotation annotation = obj.getClass().getAnnotation(MongoCollection.class);
             String collName = (String) annotation.annotationType().getMethod("name").invoke(annotation);
-            DBCursor resultDB = db.getCollection(collName).find();
+            if (query != null) {
+                resultDB = db.getCollection(collName).find(query.getQuery(), query.getConstraits());
+            } else {
+                resultDB = db.getCollection(collName).find();
+            }
             while (resultDB.hasNext()) {
                 DBObject objDB = resultDB.next();
                 if (objDB == null) {
@@ -47,10 +56,14 @@ public class CollectionManagerTest {
                 Field[] fields = obj.getClass().getDeclaredFields();
                 for (Field f : fields) {
                     f.setAccessible(true);
-                    if (f.isAnnotationPresent(ObjectId.class)) {
+                    if (objDB.get("_id") != null && f.isAnnotationPresent(ObjectId.class)) {
                         f.set(obj, objDB.get("_id").toString());
                     } else {
-                        f.set(obj, objDB.get(f.getName()));
+                        if (objDB.get(f.getName()) == null && f.getType().isPrimitive()) {
+
+                        } else {
+                            f.set(obj, objDB.get(f.getName()));
+                        }
                     }
                 }
                 resultSet.add(obj);
