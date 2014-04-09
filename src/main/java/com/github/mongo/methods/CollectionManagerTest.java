@@ -61,6 +61,9 @@ public class CollectionManagerTest {
             A obj = collectionClass.newInstance();
             Annotation annotation = obj.getClass().getAnnotation(MongoCollection.class);
             String collName = (String) annotation.annotationType().getMethod("name").invoke(annotation);
+            if (collName.equals("")) {
+                collName = collectionClass.getSimpleName();
+            }
             cursor = db.getCollection(collName).find(query.getQuery(), query.getConstraits());
             if (query.getSkip() > 0) {
                 cursor = cursor.skip(query.getSkip());
@@ -104,6 +107,9 @@ public class CollectionManagerTest {
             result = collectionClass.newInstance();
             Annotation annotation = result.getClass().getAnnotation(MongoCollection.class);
             String collName = (String) annotation.annotationType().getMethod("name").invoke(annotation);
+            if (collName.equals("")) {
+                collName = collectionClass.getSimpleName();
+            }
             DBObject obj = db.getCollection(collName).findOne();
             if (obj == null) {
                 return null;
