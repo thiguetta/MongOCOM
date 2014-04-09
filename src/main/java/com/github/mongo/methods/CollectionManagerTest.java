@@ -150,7 +150,8 @@ public class CollectionManagerTest {
             if (coll.equals("")) {
                 coll = document.getClass().getSimpleName();
             }
-            WriteResult writeresult = db.getCollection(coll).save(obj);
+            /*WriteResult writeresult = */db.getCollection(coll).save(obj);
+            //TODO set the objectId of the saved object above when it is an insertion.
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
             Logger.getLogger(CollectionManagerTest.class.getName()).log(Level.SEVERE, null, ex);
         }
