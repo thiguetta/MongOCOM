@@ -33,8 +33,25 @@ public class CollectionManagerTest {
         this.db = db;
     }
 
+    public <A> long count(Class<A> collectionClass) {
+        return count(collectionClass, new MongoQuery());
+    }
+
+    public <A> long count(Class<A> collectionClass, MongoQuery query) {
+        long ret = 0l;
+        try {
+            A result = collectionClass.newInstance();
+            Annotation annotation = result.getClass().getAnnotation(MongoCollection.class);
+            String collName = (String) annotation.annotationType().getMethod("name").invoke(annotation);
+            ret = db.getCollection(collName).count(query.getQuery());
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
+            Logger.getLogger(CollectionManagerTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return ret;
+    }
+
     public <A extends Object> List<A> find(Class<A> collectionClass) {
-        return find(collectionClass, null);
+        return find(collectionClass, new MongoQuery());
     }
 
     public <A extends Object> List<A> find(Class<A> collectionClass, MongoQuery query) {
@@ -44,11 +61,7 @@ public class CollectionManagerTest {
             A obj = collectionClass.newInstance();
             Annotation annotation = obj.getClass().getAnnotation(MongoCollection.class);
             String collName = (String) annotation.annotationType().getMethod("name").invoke(annotation);
-            if (query != null) {
-                cursor = db.getCollection(collName).find(query.getQuery(), query.getConstraits());
-            } else {
-                cursor = db.getCollection(collName).find();
-            }
+            cursor = db.getCollection(collName).find(query.getQuery(), query.getConstraits());
             if (query.getSkip() > 0) {
                 cursor = cursor.skip(query.getSkip());
             }
@@ -77,7 +90,7 @@ public class CollectionManagerTest {
                 f.set(obj, objDB.get("_id").toString());
             } else {
                 if (objDB.get(f.getName()) == null && f.getType().isPrimitive()) {
-                    
+
                 } else {
                     f.set(obj, objDB.get(f.getName()));
                 }
