@@ -19,6 +19,7 @@ import java.util.logging.Logger;
 import com.github.mongo.annotations.MongoCollection;
 import com.github.mongo.annotations.ObjectId;
 import com.github.mongo.exceptions.NoSuchMongoCollectionException;
+import com.mongodb.WriteResult;
 
 /**
  *
@@ -33,11 +34,11 @@ public class CollectionManagerTest {
         this.db = db;
     }
 
-    public <A> long count(Class<A> collectionClass) {
+    public <A extends Object> long count(Class<A> collectionClass) {
         return count(collectionClass, new MongoQuery());
     }
 
-    public <A> long count(Class<A> collectionClass, MongoQuery query) {
+    public <A extends Object> long count(Class<A> collectionClass, MongoQuery query) {
         long ret = 0l;
         try {
             A result = collectionClass.newInstance();
@@ -130,11 +131,15 @@ public class CollectionManagerTest {
         }
         try {
             BasicDBObject obj = new BasicDBObject();
+            Field objectIdField = null;
             for (Field f : document.getClass().getDeclaredFields()) {
                 try {
                     f.setAccessible(true);
                     if (!f.isAnnotationPresent(ObjectId.class)) {
                         obj.append(f.getName(), f.get(document));
+                    } else if (f.get(document) != null) {
+                        objectIdField = f;
+                        obj.append("_id", new org.bson.types.ObjectId((String) f.get(document)));
                     }
                 } catch (IllegalArgumentException | IllegalAccessException ex) {
                     Logger.getLogger(CollectionManagerTest.class.getName()).log(Level.SEVERE, null, ex);
@@ -145,7 +150,7 @@ public class CollectionManagerTest {
             if (coll.equals("")) {
                 coll = document.getClass().getSimpleName();
             }
-            db.getCollection(coll).save(obj);
+            WriteResult writeresult = db.getCollection(coll).save(obj);
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
             Logger.getLogger(CollectionManagerTest.class.getName()).log(Level.SEVERE, null, ex);
         }
