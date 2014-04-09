@@ -43,6 +43,9 @@ public class CollectionManagerTest {
             A result = collectionClass.newInstance();
             Annotation annotation = result.getClass().getAnnotation(MongoCollection.class);
             String collName = (String) annotation.annotationType().getMethod("name").invoke(annotation);
+            if (collName.equals("")) {
+                collName = collectionClass.getSimpleName();
+            }
             ret = db.getCollection(collName).count(query.getQuery());
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
             Logger.getLogger(CollectionManagerTest.class.getName()).log(Level.SEVERE, null, ex);
