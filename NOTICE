@@ -1,0 +1,14 @@
+   =========================================================================
+   ==  NOTICE file for use with the Apache License, Version 2.0,          ==
+   ==  in this case for the MongOCOM distribution.                        ==
+   =========================================================================
+
+   Mongo Object-COllection Mapper (MongOCOM)
+   Copyright 2014 All rights reserved
+
+   This product includes software developed by Thiago Gonzaga (github.com/javaboybr).
+
+   mongoDB and mongo-java-driver is an open source software, written and copyright by 
+   MongoDB, Inc. The original software is available from
+   https://github.com/mongodb/mongo
+   https://github.com/mongodb/mongo-java-driver
