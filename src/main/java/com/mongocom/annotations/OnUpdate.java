@@ -3,8 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
-package com.github.mongo.annotations;
+package com.mongocom.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -16,7 +15,9 @@ import java.lang.annotation.Target;
  * @author thiago
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface ObjectId {
-    
+@Target(ElementType.METHOD)
+public @interface OnUpdate {
+
+    TriggerType when() default TriggerType.BEFORE;
+
 }

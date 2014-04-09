@@ -1,4 +1,4 @@
-package com.github.mongo.annotations;
+package com.mongocom.annotations;
 
 /*
  * To change this license header, choose License Headers in Project Properties.

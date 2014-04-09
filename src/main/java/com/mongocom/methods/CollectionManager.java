@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package com.github.mongo.methods;
+package com.mongocom.methods;
 
 import java.util.List;
 

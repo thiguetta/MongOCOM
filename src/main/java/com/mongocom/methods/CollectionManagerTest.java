@@ -3,7 +3,7 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.github.mongo.methods;
+package com.mongocom.methods;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
@@ -16,9 +16,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import com.github.mongo.annotations.MongoCollection;
-import com.github.mongo.annotations.ObjectId;
-import com.github.mongo.exceptions.NoSuchMongoCollectionException;
+import com.mongocom.annotations.MongoCollection;
+import com.mongocom.annotations.ObjectId;
+import com.mongocom.exceptions.NoSuchMongoCollectionException;
 import com.mongodb.WriteResult;
 
 /**

@@ -3,13 +3,17 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package com.github.mongo.annotations;
+
+package com.mongocom.exceptions;
 
 /**
  *
  * @author thiago
  */
-public enum TriggerType {
+public class NoSuchMongoCollectionException extends Exception{
 
-    BEFORE, AFTER
+    public NoSuchMongoCollectionException(String message) {
+        super(message);
+    }
+    
 }
