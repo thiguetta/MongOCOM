@@ -137,7 +137,7 @@ public class CollectionManagerTest {
                     f.setAccessible(true);
                     if (!f.isAnnotationPresent(ObjectId.class)) {
                         obj.append(f.getName(), f.get(document));
-                    } else if (f.get(document) != null) {
+                    } else if (f.get(document) != null && !f.get(document).equals("")) {
                         objectIdField = f;
                         obj.append("_id", new org.bson.types.ObjectId((String) f.get(document)));
                     }
@@ -150,7 +150,8 @@ public class CollectionManagerTest {
             if (coll.equals("")) {
                 coll = document.getClass().getSimpleName();
             }
-            /*WriteResult writeresult = */db.getCollection(coll).save(obj);
+            /*WriteResult writeresult = */
+            db.getCollection(coll).save(obj);
             //TODO set the objectId of the saved object above when it is an insertion.
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
             Logger.getLogger(CollectionManagerTest.class.getName()).log(Level.SEVERE, null, ex);
