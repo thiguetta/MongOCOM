@@ -18,6 +18,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import com.mongocom.annotations.MongoCollection;
 import com.mongocom.annotations.ObjectId;
+import com.mongodb.WriteConcern;
 
 /**
  *
@@ -122,8 +123,30 @@ public class CollectionManagerTest {
         }
     }
 
+    public void update(MongoQuery query, Object document) {
+        update(query, document, false, false);
+    }
+
+    public void update(MongoQuery query, Object document, boolean upsert, boolean multi) {
+        update(query, document, upsert, multi, WriteConcern.ACKNOWLEDGED);
+    }
+
+    public void update(MongoQuery query, Object document, boolean upsert, boolean multi, WriteConcern concern) {
+        try {
+            BasicDBObject obj = fillDBObject(document);
+            String collName = reflectAnnotation(document);
+            db.getCollection(collName).update(query.getQuery(), obj, upsert, multi, concern);
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException | SecurityException | IllegalArgumentException ex) {
+            Logger.getLogger(CollectionManagerTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void updateMulti(MongoQuery query, Object document) {
+        update(query, document, false, true);
+    }
+
     public void save(Object document) {
-        //TODO: a better way to throw exceptions
+        //TODO: a better way to throw/treat exceptions
         /*if (!document.getClass().isAnnotationPresent(MongoCollection.class)) {
          throw new NoSuchMongoCollectionException(document.getClass() + " is not a valid MongoCollection.");
          }*/
