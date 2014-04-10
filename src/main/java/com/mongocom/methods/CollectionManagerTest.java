@@ -183,7 +183,7 @@ public class CollectionManagerTest {
 
     private String reflectAnnotation(Object document) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, SecurityException, IllegalArgumentException {
         Annotation annotation = document.getClass().getAnnotation(MongoCollection.class);
-        String coll = (String) annotation.annotationType().getMethod("name").invoke(annotation);
+        String coll = (String) annotation.annotationType().getMethod("value").invoke(annotation);
         if (coll.equals("")) {
             coll = document.getClass().getSimpleName();
         }

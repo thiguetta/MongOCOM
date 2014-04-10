@@ -18,6 +18,6 @@ import java.lang.annotation.Target;
 @Target(ElementType.TYPE)
 public @interface MongoCollection {
 
-    String name() default "";
+    String value() default "";
 
 }
