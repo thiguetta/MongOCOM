@@ -18,8 +18,6 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import com.mongocom.annotations.MongoCollection;
 import com.mongocom.annotations.ObjectId;
-import com.mongocom.exceptions.NoSuchMongoCollectionException;
-import com.mongodb.WriteResult;
 
 /**
  *
@@ -30,6 +28,7 @@ public class CollectionManagerTest {
     //Provides a wrapper around an insert() and update() to insert new documents.
     private DB db;
 
+    //TODO: a better way to manage db connection
     public void setDB(DB db) {
         this.db = db;
     }
@@ -42,11 +41,7 @@ public class CollectionManagerTest {
         long ret = 0l;
         try {
             A result = collectionClass.newInstance();
-            Annotation annotation = result.getClass().getAnnotation(MongoCollection.class);
-            String collName = (String) annotation.annotationType().getMethod("name").invoke(annotation);
-            if (collName.equals("")) {
-                collName = collectionClass.getSimpleName();
-            }
+            String collName = reflectAnnotation(result);
             ret = db.getCollection(collName).count(query.getQuery());
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
             Logger.getLogger(CollectionManagerTest.class.getName()).log(Level.SEVERE, null, ex);
@@ -63,11 +58,7 @@ public class CollectionManagerTest {
         DBCursor cursor = null;
         try {
             A obj = collectionClass.newInstance();
-            Annotation annotation = obj.getClass().getAnnotation(MongoCollection.class);
-            String collName = (String) annotation.annotationType().getMethod("name").invoke(annotation);
-            if (collName.equals("")) {
-                collName = collectionClass.getSimpleName();
-            }
+            String collName = reflectAnnotation(obj);
             cursor = db.getCollection(collName).find(query.getQuery(), query.getConstraits());
             if (query.getSkip() > 0) {
                 cursor = cursor.skip(query.getSkip());
@@ -109,11 +100,7 @@ public class CollectionManagerTest {
         A result = null;
         try {
             result = collectionClass.newInstance();
-            Annotation annotation = result.getClass().getAnnotation(MongoCollection.class);
-            String collName = (String) annotation.annotationType().getMethod("name").invoke(annotation);
-            if (collName.equals("")) {
-                collName = collectionClass.getSimpleName();
-            }
+            String collName = reflectAnnotation(result);
             DBObject obj = db.getCollection(collName).findOne();
             if (obj == null) {
                 return null;
@@ -125,38 +112,59 @@ public class CollectionManagerTest {
         return result;
     }
 
-    public void save(Object document) throws NoSuchMongoCollectionException {
-        if (!document.getClass().isAnnotationPresent(MongoCollection.class)) {
-            throw new NoSuchMongoCollectionException(document.getClass() + " is not a valid MongoCollection.");
-        }
+    public void insert(Object document) {
         try {
-            BasicDBObject obj = new BasicDBObject();
-            Field objectIdField = null;
-            for (Field f : document.getClass().getDeclaredFields()) {
-                try {
-                    f.setAccessible(true);
-                    if (!f.isAnnotationPresent(ObjectId.class)) {
-                        obj.append(f.getName(), f.get(document));
-                    } else if (f.get(document) != null && !f.get(document).equals("")) {
-                        objectIdField = f;
-                        obj.append("_id", new org.bson.types.ObjectId((String) f.get(document)));
-                    }
-                } catch (IllegalArgumentException | IllegalAccessException ex) {
-                    Logger.getLogger(CollectionManagerTest.class.getName()).log(Level.SEVERE, null, ex);
-                }
-            }
-            Annotation annotation = document.getClass().getAnnotation(MongoCollection.class);
-            String coll = (String) annotation.annotationType().getMethod("name").invoke(annotation);
-            if (coll.equals("")) {
-                coll = document.getClass().getSimpleName();
-            }
+            BasicDBObject obj = fillDBObject(document);
+            String collName = reflectAnnotation(document);
+            db.getCollection(collName).insert(obj);
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException | SecurityException | IllegalArgumentException ex) {
+            Logger.getLogger(CollectionManagerTest.class.getName()).log(Level.SEVERE, null, ex);
+        }
+    }
+
+    public void save(Object document) {
+        //TODO: a better way to throw exceptions
+        /*if (!document.getClass().isAnnotationPresent(MongoCollection.class)) {
+         throw new NoSuchMongoCollectionException(document.getClass() + " is not a valid MongoCollection.");
+         }*/
+        try {
+            BasicDBObject obj = fillDBObject(document);
+            String collName = reflectAnnotation(document);
             /*WriteResult writeresult = */
-            db.getCollection(coll).save(obj);
-            //TODO set the objectId of the saved object above when it is an insertion.
+            db.getCollection(collName).save(obj);
+            //TODO: set the objectId of the saved object above when it is an insertion.
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
             Logger.getLogger(CollectionManagerTest.class.getName()).log(Level.SEVERE, null, ex);
         }
         //Logger.getLogger(CollectionManagerTest.class.getName()).log(Level.INFO, "Objeto {0} salvo com sucesso.",result);
+    }
+
+    private BasicDBObject fillDBObject(Object document) throws SecurityException {
+        BasicDBObject obj = new BasicDBObject();
+        Field objectIdField = null;
+        for (Field f : document.getClass().getDeclaredFields()) {
+            try {
+                f.setAccessible(true);
+                if (!f.isAnnotationPresent(ObjectId.class)) {
+                    obj.append(f.getName(), f.get(document));
+                } else if (f.get(document) != null && !f.get(document).equals("")) {
+                    objectIdField = f;
+                    obj.append("_id", new org.bson.types.ObjectId((String) f.get(document)));
+                }
+            } catch (IllegalArgumentException | IllegalAccessException ex) {
+                Logger.getLogger(CollectionManagerTest.class.getName()).log(Level.SEVERE, null, ex);
+            }
+        }
+        return obj;
+    }
+
+    private String reflectAnnotation(Object document) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, SecurityException, IllegalArgumentException {
+        Annotation annotation = document.getClass().getAnnotation(MongoCollection.class);
+        String coll = (String) annotation.annotationType().getMethod("name").invoke(annotation);
+        if (coll.equals("")) {
+            coll = document.getClass().getSimpleName();
+        }
+        return coll;
     }
 
     public void close() {
