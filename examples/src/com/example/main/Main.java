@@ -14,19 +14,14 @@
  * limitations under the License.
  */
 
-package com.mongocom.annotations;
-
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package com.example.main;
 
 /**
  *
  * @author Thiago da Silva Gonzaga <thiagosg@sjrp.unesp.br>.
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface ObjectId {
-    
+public class Main {
+    public static void main(String[] args) {
+        
+    }
 }
