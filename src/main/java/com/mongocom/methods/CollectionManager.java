@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.mongocom.methods;
 
 import com.mongodb.BasicDBObject;
@@ -27,7 +26,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import com.mongocom.annotations.MongoCollection;
+import com.mongocom.annotations.Document;
 import com.mongocom.annotations.ObjectId;
 import com.mongodb.WriteConcern;
 
@@ -43,7 +42,7 @@ public class CollectionManager {
     public void setDB(DB db) {
         this.db = db;
     }
-    
+
     public <A extends Object> long count(Class<A> collectionClass) {
         return count(collectionClass, new MongoQuery());
     }
@@ -157,8 +156,8 @@ public class CollectionManager {
 
     public void save(Object document) {
         //TODO: a better way to throw/treat exceptions
-        /*if (!document.getClass().isAnnotationPresent(MongoCollection.class)) {
-         throw new NoSuchMongoCollectionException(document.getClass() + " is not a valid MongoCollection.");
+        /*if (!document.getClass().isAnnotationPresent(Document.class)) {
+         throw new NoSuchMongoCollectionException(document.getClass() + " is not a valid Document.");
          }*/
         try {
             BasicDBObject obj = fillDBObject(document);
@@ -192,8 +191,8 @@ public class CollectionManager {
     }
 
     private String reflectAnnotation(Object document) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, SecurityException, IllegalArgumentException {
-        Annotation annotation = document.getClass().getAnnotation(MongoCollection.class);
-        String coll = (String) annotation.annotationType().getMethod("value").invoke(annotation);
+        Annotation annotation = document.getClass().getAnnotation(Document.class);
+        String coll = (String) annotation.annotationType().getMethod("collection").invoke(annotation);
         if (coll.equals("")) {
             coll = document.getClass().getSimpleName();
         }

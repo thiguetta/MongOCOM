@@ -16,7 +16,6 @@
 
 package com.mongocom.annotations;
 
-import com.mongocom.types.TriggerType;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -27,9 +26,9 @@ import java.lang.annotation.Target;
  * @author Thiago da Silva Gonzaga <thiagosg@sjrp.unesp.br>.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface OnDelete {
+@Target(ElementType.TYPE)
+public @interface Document {
 
-    TriggerType when() default TriggerType.BEFORE;
+    String collection() default "";
 
 }

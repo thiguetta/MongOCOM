@@ -13,9 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.mongocom.annotations;
 
+import com.mongocom.types.Action;
+import com.mongocom.types.TriggerType;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -26,9 +27,11 @@ import java.lang.annotation.Target;
  * @author Thiago da Silva Gonzaga <thiagosg@sjrp.unesp.br>.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.TYPE)
-public @interface MongoCollection {
+@Target(ElementType.METHOD)
+public @interface Trigger {
 
-    String value() default "";
+    Action value();
+
+    TriggerType when() default TriggerType.BEFORE;
 
 }

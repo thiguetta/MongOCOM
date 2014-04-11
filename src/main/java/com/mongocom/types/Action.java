@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Thiago da Silva Gonzaga <thiagosg@sjrp.unesp.br>..
+ * Copyright 2014 Thiago da Silva Gonzaga <thiagosg@sjrp.unesp.br>.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,22 +14,12 @@
  * limitations under the License.
  */
 
-package com.mongocom.annotations;
-
-import com.mongocom.types.TriggerType;
-import java.lang.annotation.ElementType;
-import java.lang.annotation.Retention;
-import java.lang.annotation.RetentionPolicy;
-import java.lang.annotation.Target;
+package com.mongocom.types;
 
 /**
  *
- * @author Thiago da Silva Gonzaga <thiagosg@sjrp.unesp.br>.
+ * @author Thiago da Silva Gonzaga <thiagosg@sjrp.unesp.br>
  */
-@Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface OnInsert {
-
-    TriggerType when() default TriggerType.BEFORE;
-
+public enum Action {
+    ON_UPDATE, ON_INSERT, ON_REMOVE
 }
