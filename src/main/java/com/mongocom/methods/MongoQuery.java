@@ -16,6 +16,7 @@
 package com.mongocom.methods;
 
 import com.mongodb.BasicDBObject;
+import org.bson.types.ObjectId;
 
 /**
  *
@@ -27,11 +28,11 @@ public final class MongoQuery {
     private BasicDBObject constraits;
     private int limit;
     private int skip;
-
+    
     public MongoQuery() {
         query = new BasicDBObject();
     }
-
+    
     public MongoQuery(String field, Object value) {
         this();
         add(field, value);
@@ -48,6 +49,8 @@ public final class MongoQuery {
         if (value instanceof MongoQuery) {
             MongoQuery q = (MongoQuery) value;
             query.append(field, q.getQuery());
+        } else if (field.equals("_id")) {
+            query.append(field, new ObjectId((String) value));
         } else {
             query.append(field, value);
         }
@@ -71,7 +74,7 @@ public final class MongoQuery {
     }
 
     /**
-     * Remove the specified fields from the result document set
+     * Remove the specified fields from the result document set.
      *
      * @param fields fields to be removed
      */
@@ -83,42 +86,43 @@ public final class MongoQuery {
     }
 
     /**
-     * mark to remove _id field from the document set
+     * mark to remove _id field from the result document.
+     *
      */
     public void removeIdFromResult() {
         constraits.append("_id", 0);
     }
-
+    
     public BasicDBObject getQuery() {
         return query;
     }
-
+    
     public BasicDBObject getConstraits() {
         return constraits;
     }
-
+    
     public int getLimit() {
         return limit;
     }
-
+    
     public void limit(int limit) {
         this.limit = limit;
     }
-
+    
     public int getSkip() {
         return skip;
     }
-
+    
     public void skip(int skip) {
         this.skip = skip;
     }
-
+    
     public String getQueryJson() {
         return query.toString();
     }
-
+    
     public String getConstraitsJson() {
         return constraits.toString();
     }
-
+    
 }

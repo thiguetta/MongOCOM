@@ -16,7 +16,7 @@
 package com.example.collections;
 
 import com.mongocom.annotations.Internal;
-import com.mongocom.annotations.MongoCollection;
+import com.mongocom.annotations.Document;
 import com.mongocom.annotations.ObjectId;
 import com.mongocom.annotations.Reference;
 import java.util.List;
@@ -25,7 +25,7 @@ import java.util.List;
  *
  * @author Thiago da Silva Gonzaga <thiagosg@sjrp.unesp.br>.
  */
-@MongoCollection //this represents the structure of a document of this collection
+@Document //this represents the structure of a document of the collection contact
 public class Contact {
 
     @ObjectId
@@ -76,7 +76,5 @@ public class Contact {
     public void setCompany(Contact company) {
         this.company = company;
     }
-    
-    
 
 }
