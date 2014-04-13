@@ -133,6 +133,8 @@ public final class CollectionManager implements Closeable {
                     }
                 }
                 f.set(obj, list);
+            } else if (fieldContent != null && f.getType().isEnum()) {
+                f.set(obj, Enum.valueOf((Class) f.getType(), (String) fieldContent));
             } else if (fieldContent != null && f.isAnnotationPresent(ObjectId.class)) {
                 f.set(obj, ((BasicDBObject) fieldContent).getString("_id"));
             } else if (fieldContent != null && f.isAnnotationPresent(Reference.class)) {
@@ -277,6 +279,8 @@ public final class CollectionManager implements Closeable {
                         }
                     }
                     obj.append(fieldName, list);
+                } else if (fieldContent != null && f.getType().isEnum()) {
+                    obj.append(fieldName, fieldContent.toString());
                 } else if (fieldContent != null && f.isAnnotationPresent(Reference.class)) {
                     obj.append(fieldName, new org.bson.types.ObjectId(save(fieldContent)));
                 } else if (fieldContent != null && f.isAnnotationPresent(Internal.class)) {
