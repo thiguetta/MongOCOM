@@ -34,6 +34,8 @@ import com.mongodb.BasicDBList;
 import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
 import java.io.Closeable;
+import java.lang.reflect.ParameterizedType;
+import java.lang.reflect.Type;
 import org.bson.types.BasicBSONList;
 
 /**
@@ -113,17 +115,25 @@ public final class CollectionManager implements Closeable {
             String fieldName = f.getName();
             Object fieldContent = objDB.get(fieldName);
             if (fieldContent instanceof BasicBSONList) {
+                Class<?> fieldArgClass = null;
+                ParameterizedType genericFieldType = (ParameterizedType) f.getGenericType();
+                Type[] fieldArgTypes = genericFieldType.getActualTypeArguments();
+                for (Type fieldArgType : fieldArgTypes) {
+                    fieldArgClass = (Class<?>) fieldArgType;
+                }
                 List<Object> list = new ArrayList<>();
+                boolean isInternal = f.isAnnotationPresent(Internal.class);
                 for (Object item : (BasicBSONList) fieldContent) {
-                    if (f.isAnnotationPresent(Internal.class)) {
-                        Object t = f.getType().getComponentType().newInstance();
+                    if (isInternal) {
+                        Object t = fieldArgClass.newInstance();
                         fillFields(t, (DBObject) item);
                         list.add(t);
+                    } else {
+                        list.add(item);
                     }
                 }
                 f.set(obj, list);
-            }
-            if (fieldContent != null && f.isAnnotationPresent(ObjectId.class)) {
+            } else if (fieldContent != null && f.isAnnotationPresent(ObjectId.class)) {
                 f.set(obj, ((BasicDBObject) fieldContent).getString("_id"));
             } else if (fieldContent != null && f.isAnnotationPresent(Reference.class)) {
                 f.set(obj, findById(f.getType(), ((org.bson.types.ObjectId) fieldContent).toString()));
@@ -169,7 +179,7 @@ public final class CollectionManager implements Closeable {
     }
 
     public <A extends Object> A findById(Class<A> collectionClass, String id) {
-        return findOne(collectionClass, new MongoQuery("_id", new org.bson.types.ObjectId(id)));
+        return findOne(collectionClass, new MongoQuery("_id", id));
     }
 
     public void remove(Object document) {
