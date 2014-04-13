@@ -16,6 +16,7 @@
 package com.mongocom.management;
 
 import com.mongodb.MongoClient;
+import com.mongodb.MongoException;
 import java.net.UnknownHostException;
 import java.util.logging.Level;
 import java.util.logging.Logger;
@@ -33,11 +34,13 @@ public final class CollectionManagerFactory {
     public static CollectionManager createCollectionManager() {
         try {
             client = new MongoClient();
-        } catch (UnknownHostException ex) {
-            logger.log(Level.SEVERE, "Local server is not running.", ex);
+            client.getDatabaseNames();
+            logger.log(Level.INFO, "Connected to {0}", client.getAddress());
+            return new CollectionManager(client, null);
+        } catch (MongoException | UnknownHostException ex) {
+            logger.log(Level.SEVERE, "Local server is probably not running: {0}", ex.getMessage());
         }
-        logger.log(Level.INFO, "Connected to {0}", client.getAddress());
-        return new CollectionManager(client);
+        return null;
     }
 
     public static CollectionManager createCollectionManager(String host, int port) {
@@ -48,10 +51,10 @@ public final class CollectionManagerFactory {
                 client = new MongoClient(host, port);
             }
         } catch (UnknownHostException ex) {
-            logger.log(Level.SEVERE, "Server not found at {0}:{1}.", new Object[]{host, port});
+            logger.log(Level.SEVERE, "Server not found at {0}:{1}.", port != 0 ? new Object[]{host, port} : host);
         }
         logger.log(Level.INFO, "Connected to {0}", client.getAddress());
-        return new CollectionManager(client);
+        return new CollectionManager(client, null);
     }
 
     public static CollectionManager createCollectionManager(String host) {

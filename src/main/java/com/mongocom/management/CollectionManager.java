@@ -34,19 +34,25 @@ import com.mongodb.BasicDBList;
 import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
 import java.io.Closeable;
+import org.bson.types.BasicBSONList;
 
 /**
  *
  * @author Thiago da Silva Gonzaga <thiagosg@sjrp.unesp.br>.
  */
-public class CollectionManager implements Closeable {
+public final class CollectionManager implements Closeable {
 
     private final MongoClient client;
     private DB db;
 
     //TODO: a better way to manage db connection
-    public CollectionManager(MongoClient client) {
+    protected CollectionManager(MongoClient client, String dataBase) {
         this.client = client;
+        if (dataBase != null && !dataBase.equals("")) {
+            this.db = client.getDB(dataBase);
+        } else {
+            this.db = client.getDB(client.getDatabaseNames().get(0));
+        }
     }
 
     public void useDB(String dbName) {
@@ -100,14 +106,27 @@ public class CollectionManager implements Closeable {
         return resultSet;
     }
 
-    private <A extends Object> void fillFields(A obj, DBObject objDB) throws IllegalAccessException, IllegalArgumentException, SecurityException {
+    private <A extends Object> void fillFields(A obj, DBObject objDB) throws IllegalAccessException, IllegalArgumentException, SecurityException, InstantiationException {
         Field[] fields = obj.getClass().getDeclaredFields();
         for (Field f : fields) {
             f.setAccessible(true);
             String fieldName = f.getName();
             Object fieldContent = objDB.get(fieldName);
+            if (fieldContent instanceof BasicBSONList) {
+                List<Object> list = new ArrayList<>();
+                for (Object item : (BasicBSONList) fieldContent) {
+                    if (f.isAnnotationPresent(Internal.class)) {
+                        Object t = f.getType().getComponentType().newInstance();
+                        fillFields(t, (DBObject) item);
+                        list.add(t);
+                    }
+                }
+                f.set(obj, list);
+            }
             if (fieldContent != null && f.isAnnotationPresent(ObjectId.class)) {
                 f.set(obj, ((BasicDBObject) fieldContent).getString("_id"));
+            } else if (fieldContent != null && f.isAnnotationPresent(Reference.class)) {
+                f.set(obj, findById(f.getType(), ((org.bson.types.ObjectId) fieldContent).toString()));
             } else if (fieldContent == null && f.getType().isPrimitive()) {
 
             } else {
@@ -150,7 +169,7 @@ public class CollectionManager implements Closeable {
     }
 
     public <A extends Object> A findById(Class<A> collectionClass, String id) {
-        return findOne(collectionClass, new MongoQuery("_id", id));
+        return findOne(collectionClass, new MongoQuery("_id", new org.bson.types.ObjectId(id)));
     }
 
     public void remove(Object document) {
@@ -166,6 +185,9 @@ public class CollectionManager implements Closeable {
 
     public String insert(Object document) {
         String _id = null;
+        if (document == null) {
+            return _id;
+        }
         try {
             BasicDBObject obj = fillDBObject(document);
             String collName = reflectAnnotation(document);
@@ -210,6 +232,9 @@ public class CollectionManager implements Closeable {
          throw new NoSuchMongoCollectionException(document.getClass() + " is not a valid Document.");
          }*/
         String _id = null;
+        if (document == null) {
+            return _id;
+        }
         try {
             BasicDBObject obj = fillDBObject(document);
             String collName = reflectAnnotation(document);
@@ -225,6 +250,7 @@ public class CollectionManager implements Closeable {
 
     private BasicDBObject fillDBObject(Object document) throws SecurityException {
         BasicDBObject obj = new BasicDBObject();
+        System.out.println(document);
         for (Field f : document.getClass().getDeclaredFields()) {
             try {
                 f.setAccessible(true);
@@ -232,7 +258,7 @@ public class CollectionManager implements Closeable {
                 Object fieldContent = f.get(document);
                 if (fieldContent instanceof List) {
                     BasicDBList list = new BasicDBList();
-                    boolean isInternal = fieldContent.getClass().isAnnotationPresent(Internal.class);
+                    boolean isInternal = f.isAnnotationPresent(Internal.class);
                     for (Object item : (List) fieldContent) {
                         if (isInternal) {
                             list.add(fillDBObject(item));
@@ -241,9 +267,9 @@ public class CollectionManager implements Closeable {
                         }
                     }
                     obj.append(fieldName, list);
-                } else if (f.isAnnotationPresent(Reference.class)) {
-                    obj.append(fieldName, save(fieldContent));
-                } else if (f.isAnnotationPresent(Internal.class)) {
+                } else if (fieldContent != null && f.isAnnotationPresent(Reference.class)) {
+                    obj.append(fieldName, new org.bson.types.ObjectId(save(fieldContent)));
+                } else if (fieldContent != null && f.isAnnotationPresent(Internal.class)) {
                     obj.append(fieldName, fillDBObject(fieldContent));
                 } else if (!f.isAnnotationPresent(ObjectId.class)) {
                     obj.append(fieldName, fieldContent);
@@ -258,7 +284,7 @@ public class CollectionManager implements Closeable {
     }
 
     private <A> Field getFieldByAnnotation(Object obj, Class<? extends Annotation> annotationClass, boolean annotationRequired) throws NoSuchFieldException {
-        Field[] fields = obj.getClass().getFields();
+        Field[] fields = obj.getClass().getDeclaredFields();
         for (Field f : fields) {
             if (f.isAnnotationPresent(annotationClass)) {
                 return f;
@@ -277,6 +303,10 @@ public class CollectionManager implements Closeable {
             coll = document.getClass().getSimpleName();
         }
         return coll;
+    }
+
+    public String getStatus() {
+        return client.getAddress() + " " + client.getMongoOptions();
     }
 
     @Override
