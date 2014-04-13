@@ -15,10 +15,12 @@
  */
 package com.example.collections;
 
+import com.example.collections.types.ContactType;
 import com.mongocom.annotations.Internal;
 import com.mongocom.annotations.Document;
 import com.mongocom.annotations.ObjectId;
 import com.mongocom.annotations.Reference;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -31,11 +33,34 @@ public class Contact {
     @ObjectId
     private String id; //not required unless you want to retrive this information from db
     private String name;
+    private ContactType type;
     @Internal //embedded document(s)
     private List<Phone> phones;
     private String email;
     @Reference //relationship with another document
     private Contact company;
+
+    public Contact() {
+    }
+
+    public Contact(String name) {
+        this.name = name;
+    }
+
+    public ContactType getType() {
+        return type;
+    }
+
+    public void setType(ContactType type) {
+        this.type = type;
+    }
+
+    public void addPhone(Phone phone) {
+        if (phones == null) {
+            phones = new ArrayList<>();
+        }
+        phones.add(phone);
+    }
 
     public String getId() {
         return id;

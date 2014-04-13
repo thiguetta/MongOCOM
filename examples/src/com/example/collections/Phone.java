@@ -15,6 +15,7 @@
  */
 package com.example.collections;
 
+import com.example.collections.types.PhoneType;
 import com.mongocom.annotations.Internal;
 
 /**
@@ -24,9 +25,30 @@ import com.mongocom.annotations.Internal;
 @Internal
 public class Phone {
 
+    private PhoneType phoneType;
     private int countryCode;
     private int areaCode;
     private int phoneNumber;
+
+    //if the class has a parameterized constructor, it must have at least a constructor with no parameters.
+    public Phone() {
+
+    }
+
+    public Phone(PhoneType phoneType, int countryCode, int areaCode, int phoneNumber) {
+        this.phoneType = phoneType;
+        this.countryCode = countryCode;
+        this.areaCode = areaCode;
+        this.phoneNumber = phoneNumber;
+    }
+
+    public PhoneType getPhoneType() {
+        return phoneType;
+    }
+
+    public void setPhoneType(PhoneType phoneType) {
+        this.phoneType = phoneType;
+    }
 
     public int getCountryCode() {
         return countryCode;
@@ -51,6 +73,5 @@ public class Phone {
     public void setPhoneNumber(int phoneNumber) {
         this.phoneNumber = phoneNumber;
     }
-    
-    
+
 }
