@@ -1,4 +1,4 @@
-package com.github.mongocom;
+package com.mongocom.tests;
 
 import junit.framework.Test;
 import junit.framework.TestCase;

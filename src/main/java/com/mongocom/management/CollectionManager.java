@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongocom.methods;
+package com.mongocom.management;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
@@ -31,25 +31,32 @@ import com.mongocom.annotations.Internal;
 import com.mongocom.annotations.ObjectId;
 import com.mongocom.annotations.Reference;
 import com.mongodb.BasicDBList;
+import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
+import java.io.Closeable;
 
 /**
  *
  * @author Thiago da Silva Gonzaga <thiagosg@sjrp.unesp.br>.
  */
-public class CollectionManager {
-    
+public class CollectionManager implements Closeable {
+
+    private final MongoClient client;
     private DB db;
 
     //TODO: a better way to manage db connection
-    public void setDB(DB db) {
-        this.db = db;
+    public CollectionManager(MongoClient client) {
+        this.client = client;
     }
-    
+
+    public void useDB(String dbName) {
+        db = client.getDB(dbName);
+    }
+
     public <A extends Object> long count(Class<A> collectionClass) {
         return count(collectionClass, new MongoQuery());
     }
-    
+
     public <A extends Object> long count(Class<A> collectionClass, MongoQuery query) {
         long ret = 0l;
         try {
@@ -61,11 +68,11 @@ public class CollectionManager {
         }
         return ret;
     }
-    
+
     public <A extends Object> List<A> find(Class<A> collectionClass) {
         return find(collectionClass, new MongoQuery());
     }
-    
+
     public <A extends Object> List<A> find(Class<A> collectionClass, MongoQuery query) {
         List<A> resultSet = new ArrayList<>();
         DBCursor cursor = null;
@@ -92,7 +99,7 @@ public class CollectionManager {
         }
         return resultSet;
     }
-    
+
     private <A extends Object> void fillFields(A obj, DBObject objDB) throws IllegalAccessException, IllegalArgumentException, SecurityException {
         Field[] fields = obj.getClass().getDeclaredFields();
         for (Field f : fields) {
@@ -102,14 +109,14 @@ public class CollectionManager {
             if (fieldContent != null && f.isAnnotationPresent(ObjectId.class)) {
                 f.set(obj, ((BasicDBObject) fieldContent).getString("_id"));
             } else if (fieldContent == null && f.getType().isPrimitive()) {
-                
+
             } else {
                 f.set(obj, fieldContent);
-                
+
             }
         }
     }
-    
+
     public <A extends Object> A findOne(Class<A> collectionClass) {
         A result = null;
         try {
@@ -125,7 +132,38 @@ public class CollectionManager {
         }
         return result;
     }
-    
+
+    public <A extends Object> A findOne(Class<A> collectionClass, MongoQuery query) {
+        A result = null;
+        try {
+            result = collectionClass.newInstance();
+            String collName = reflectAnnotation(result);
+            DBObject obj = db.getCollection(collName).findOne(query.getQuery(), query.getConstraits());
+            if (obj == null) {
+                return null;
+            }
+            fillFields(result, obj);
+        } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | InstantiationException ex) {
+            Logger.getLogger(CollectionManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+        return result;
+    }
+
+    public <A extends Object> A findById(Class<A> collectionClass, String id) {
+        return findOne(collectionClass, new MongoQuery("_id", id));
+    }
+
+    public void remove(Object document) {
+        try {
+            BasicDBObject obj = fillDBObject(document);
+            String collName = reflectAnnotation(document);
+            db.getCollection(collName).remove(obj);
+        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException | SecurityException | IllegalArgumentException ex) {
+            Logger.getLogger(CollectionManager.class.getName()).log(Level.SEVERE, null, ex);
+        }
+
+    }
+
     public String insert(Object document) {
         String _id = null;
         try {
@@ -143,15 +181,15 @@ public class CollectionManager {
         }
         return _id;
     }
-    
+
     public void update(MongoQuery query, Object document) {
         update(query, document, false, false);
     }
-    
+
     public void update(MongoQuery query, Object document, boolean upsert, boolean multi) {
         update(query, document, upsert, multi, WriteConcern.ACKNOWLEDGED);
     }
-    
+
     public void update(MongoQuery query, Object document, boolean upsert, boolean multi, WriteConcern concern) {
         try {
             BasicDBObject obj = fillDBObject(document);
@@ -161,11 +199,11 @@ public class CollectionManager {
             Logger.getLogger(CollectionManager.class.getName()).log(Level.SEVERE, null, ex);
         }
     }
-    
+
     public void updateMulti(MongoQuery query, Object document) {
         update(query, document, false, true);
     }
-    
+
     public String save(Object document) {
         //TODO: a better way to throw/treat exceptions
         /*if (!document.getClass().isAnnotationPresent(Document.class)) {
@@ -184,7 +222,7 @@ public class CollectionManager {
         return _id;
         //Logger.getLogger(CollectionManager.class.getName()).log(Level.INFO, "Objeto {0} salvo com sucesso.",result);
     }
-    
+
     private BasicDBObject fillDBObject(Object document) throws SecurityException {
         BasicDBObject obj = new BasicDBObject();
         for (Field f : document.getClass().getDeclaredFields()) {
@@ -218,7 +256,7 @@ public class CollectionManager {
         }
         return obj;
     }
-    
+
     private <A> Field getFieldByAnnotation(Object obj, Class<? extends Annotation> annotationClass, boolean annotationRequired) throws NoSuchFieldException {
         Field[] fields = obj.getClass().getFields();
         for (Field f : fields) {
@@ -231,7 +269,7 @@ public class CollectionManager {
         }
         return null;
     }
-    
+
     private String reflectAnnotation(Object document) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, SecurityException, IllegalArgumentException {
         Annotation annotation = document.getClass().getAnnotation(Document.class);
         String coll = (String) annotation.annotationType().getMethod("collection").invoke(annotation);
@@ -240,8 +278,9 @@ public class CollectionManager {
         }
         return coll;
     }
-    
+
+    @Override
     public void close() {
-        db.getMongo().close();
+        client.close();
     }
 }
