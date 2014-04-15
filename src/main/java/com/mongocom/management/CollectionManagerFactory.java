@@ -29,35 +29,47 @@ public final class CollectionManagerFactory {
 
     private static MongoClient client;
 
-    private static final Logger logger = Logger.getLogger("com.mongocom.management.CollectionManagerFactory");
+    private static final Logger logger = Logger.getLogger("CollectionManagerFactory");
 
     public static CollectionManager createCollectionManager() {
-        try {
-            client = new MongoClient();
-            client.getDatabaseNames();
-            logger.log(Level.INFO, "Connected to {0}", client.getAddress());
-            return new CollectionManager(client, null);
-        } catch (MongoException | UnknownHostException ex) {
-            logger.log(Level.SEVERE, "Local server is probably not running: {0}", ex.getMessage());
-        }
-        return null;
-    }
-
-    public static CollectionManager createCollectionManager(String host, int port) {
-        try {
-            if (port == 0) {
-                client = new MongoClient(host);
-            } else {
-                client = new MongoClient(host, port);
-            }
-        } catch (UnknownHostException ex) {
-            logger.log(Level.SEVERE, "Server not found at {0}:{1}.", port != 0 ? new Object[]{host, port} : host);
-        }
-        logger.log(Level.INFO, "Connected to {0}", client.getAddress());
-        return new CollectionManager(client, null);
+        return createBaseCollectionManager("", 0, "", "", "");
     }
 
     public static CollectionManager createCollectionManager(String host) {
-        return createCollectionManager(host, 0);
+        return createBaseCollectionManager(host, 0, "", "", "");
+    }
+
+    public static CollectionManager createCollectionManager(String host, int port) {
+        return createBaseCollectionManager(host, port, "", "", "");
+    }
+
+    public static CollectionManager createCollectionManager(String dbName, String user, String password) {
+        return createBaseCollectionManager("", 0, dbName, user, password);
+    }
+
+    public static CollectionManager createCollectionManager(String host, int port, String dbName, String user, String password) {
+        return createBaseCollectionManager(host, port, dbName, user, password);
+    }
+
+    private static CollectionManager createBaseCollectionManager(String host, int port, String dbName, String user, String password) {
+        try {
+            if ("".equals(host)) {
+                client = new MongoClient();
+            } else {
+                if (port == 0) {
+                    client = new MongoClient(host);
+                } else {
+                    client = new MongoClient(host, port);
+                }
+            }
+            logger.log(Level.INFO, "Connected to {0}", client.getAddress());
+            if ("".equals(user)) {
+                return new CollectionManager(client, dbName);
+            }
+            return new CollectionManager(client, dbName, user, password);
+        } catch (MongoException | UnknownHostException ex) {
+            logger.log(Level.SEVERE, "Unable to connect to a mongoDB instance, maybe it is not running or you do not have the right permission: ", ex);
+        }
+        return null;
     }
 }

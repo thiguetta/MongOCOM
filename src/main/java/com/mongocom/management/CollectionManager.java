@@ -57,6 +57,11 @@ public final class CollectionManager implements Closeable {
         }
     }
 
+    protected CollectionManager(MongoClient client, String dbName, String user, String password) {
+        this(client, dbName);
+        db.authenticate(user, password.toCharArray());
+    }
+
     public void useDB(String dbName) {
         db = client.getDB(dbName);
     }
