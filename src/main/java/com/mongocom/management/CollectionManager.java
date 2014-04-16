@@ -46,6 +46,7 @@ public final class CollectionManager implements Closeable {
 
     private final MongoClient client;
     private DB db;
+    private static final Logger LOG = Logger.getLogger(CollectionManager.class.getName());
 
     //TODO: a better way to manage db connection
     protected CollectionManager(MongoClient client, String dataBase) {
@@ -66,33 +67,63 @@ public final class CollectionManager implements Closeable {
         db = client.getDB(dbName);
     }
 
+    /**
+     * The number of documents in the specified collection.
+     *
+     * @param <A> generic type of the collection.
+     * @param collectionClass
+     * @return the total of documents.
+     */
     public <A extends Object> long count(Class<A> collectionClass) {
         return count(collectionClass, new MongoQuery());
     }
 
+    /**
+     * The number of documents that match the specified query.
+     *
+     * @param <A> generic type of the collection.
+     * @param collectionClass
+     * @param query
+     * @return the total of documents.
+     */
     public <A extends Object> long count(Class<A> collectionClass, MongoQuery query) {
         long ret = 0l;
         try {
             A result = collectionClass.newInstance();
-            String collName = reflectAnnotation(result);
-            ret = db.getCollection(collName).count(query.getQuery());
+            String collectionName = reflectCollectionName(result);
+            ret = db.getCollection(collectionName).count(query.getQuery());
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
-            Logger.getLogger(CollectionManager.class.getName()).log(Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, null, ex);
         }
         return ret;
     }
 
+    /**
+     * Find all documents in the specified collection.
+     *
+     * @param <A> generic type of the collection.
+     * @param collectionClass
+     * @return a list of documents.
+     */
     public <A extends Object> List<A> find(Class<A> collectionClass) {
         return find(collectionClass, new MongoQuery());
     }
 
+    /**
+     * Find all documents that match the specified query.
+     *
+     * @param <A> generic type of the collection.
+     * @param collectionClass
+     * @param query
+     * @return a list of documents.
+     */
     public <A extends Object> List<A> find(Class<A> collectionClass, MongoQuery query) {
         List<A> resultSet = new ArrayList<>();
         DBCursor cursor = null;
         try {
             A obj = collectionClass.newInstance();
-            String collName = reflectAnnotation(obj);
-            cursor = db.getCollection(collName).find(query.getQuery(), query.getConstraits());
+            String collectionName = reflectCollectionName(obj);
+            cursor = db.getCollection(collectionName).find(query.getQuery(), query.getConstraits());
             if (query.getSkip() > 0) {
                 cursor = cursor.skip(query.getSkip());
             }
@@ -101,122 +132,122 @@ public final class CollectionManager implements Closeable {
             }
             while (cursor.hasNext()) {
                 DBObject objDB = cursor.next();
-                fillFields(obj, objDB);
+                loadObject(obj, objDB);
                 resultSet.add(obj);
                 obj = collectionClass.newInstance();
             }
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
-            Logger.getLogger(CollectionManager.class.getName()).log(Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, null, ex);
         } finally {
-            cursor.close();
+            if (cursor != null) {
+                cursor.close();
+            }
         }
         return resultSet;
     }
 
-    private <A extends Object> void fillFields(A obj, DBObject objDB) throws IllegalAccessException, IllegalArgumentException, SecurityException, InstantiationException {
-        Field[] fields = obj.getClass().getDeclaredFields();
-        for (Field f : fields) {
-            f.setAccessible(true);
-            String fieldName = f.getName();
-            Object fieldContent = objDB.get(fieldName);
-            if (fieldContent instanceof BasicBSONList) {
-                Class<?> fieldArgClass = null;
-                ParameterizedType genericFieldType = (ParameterizedType) f.getGenericType();
-                Type[] fieldArgTypes = genericFieldType.getActualTypeArguments();
-                for (Type fieldArgType : fieldArgTypes) {
-                    fieldArgClass = (Class<?>) fieldArgType;
-                }
-                List<Object> list = new ArrayList<>();
-                boolean isInternal = f.isAnnotationPresent(Internal.class);
-                for (Object item : (BasicBSONList) fieldContent) {
-                    if (isInternal) {
-                        Object t = fieldArgClass.newInstance();
-                        fillFields(t, (DBObject) item);
-                        list.add(t);
-                    } else {
-                        list.add(item);
-                    }
-                }
-                f.set(obj, list);
-            } else if (fieldContent != null && f.getType().isEnum()) {
-                f.set(obj, Enum.valueOf((Class) f.getType(), (String) fieldContent));
-            } else if (fieldContent != null && f.isAnnotationPresent(ObjectId.class)) {
-                f.set(obj, ((BasicDBObject) fieldContent).getString("_id"));
-            } else if (fieldContent != null && f.isAnnotationPresent(Reference.class)) {
-                f.set(obj, findById(f.getType(), ((org.bson.types.ObjectId) fieldContent).toString()));
-            } else if (fieldContent == null && f.getType().isPrimitive()) {
-
-            } else {
-                f.set(obj, fieldContent);
-
-            }
-        }
-    }
-
+    /**
+     * Find a single document of the the specified collection.
+     *
+     * @param <A> generic type of the collection.
+     * @param collectionClass
+     * @return a document.
+     */
     public <A extends Object> A findOne(Class<A> collectionClass) {
         A result = null;
         try {
             result = collectionClass.newInstance();
-            String collName = reflectAnnotation(result);
-            DBObject obj = db.getCollection(collName).findOne();
+            String collectionName = reflectCollectionName(result);
+            DBObject obj = db.getCollection(collectionName).findOne();
             if (obj == null) {
                 return null;
             }
-            fillFields(result, obj);
+            loadObject(result, obj);
         } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | InstantiationException ex) {
-            Logger.getLogger(CollectionManager.class.getName()).log(Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, null, ex);
         }
         return result;
     }
 
+    /**
+     * Find a single document that matches the specified query.
+     *
+     * @param <A> generic type of the collection.
+     * @param collectionClass
+     * @param query
+     * @return a document.
+     */
     public <A extends Object> A findOne(Class<A> collectionClass, MongoQuery query) {
         A result = null;
         try {
             result = collectionClass.newInstance();
-            String collName = reflectAnnotation(result);
-            DBObject obj = db.getCollection(collName).findOne(query.getQuery(), query.getConstraits());
+            String collectionName = reflectCollectionName(result);
+            DBObject obj = db.getCollection(collectionName).findOne(query.getQuery(), query.getConstraits());
             if (obj == null) {
                 return null;
             }
-            fillFields(result, obj);
+            loadObject(result, obj);
         } catch (NoSuchMethodException | SecurityException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | InstantiationException ex) {
-            Logger.getLogger(CollectionManager.class.getName()).log(Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, null, ex);
         }
         return result;
     }
 
+    /**
+     * Find a single document that matches the specified id.
+     *
+     * @param <A> generic type of the collection.
+     * @param collectionClass
+     * @param id
+     * @return a document.
+     */
     public <A extends Object> A findById(Class<A> collectionClass, String id) {
         return findOne(collectionClass, new MongoQuery("_id", id));
     }
 
+    /**
+     * Remove the specified document from the collection.
+     *
+     * @param document to be removed.
+     */
     public void remove(Object document) {
         try {
-            BasicDBObject obj = fillDBObject(document);
-            String collName = reflectAnnotation(document);
-            db.getCollection(collName).remove(obj);
+            BasicDBObject obj = loadDocument(document);
+            String collectionName = reflectCollectionName(document);
+            db.getCollection(collectionName).remove(obj);
         } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException | SecurityException | IllegalArgumentException ex) {
-            Logger.getLogger(CollectionManager.class.getName()).log(Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, "An error occured while removing this document: {0}", ex.getMessage());
         }
 
     }
 
+    /**
+     * Insert the document in a collection
+     *
+     * @param document
+     * @return the <code>_id</code> of the inserted document, <code>null</code>
+     * if fails.
+     */
     public String insert(Object document) {
         String _id = null;
         if (document == null) {
             return _id;
         }
         try {
-            BasicDBObject obj = fillDBObject(document);
-            String collName = reflectAnnotation(document);
-            db.getCollection(collName).insert(obj);
+            BasicDBObject obj = loadDocument(document);
+            String collectionName = reflectCollectionName(document);
+            db.getCollection(collectionName).insert(obj);
             _id = obj.getString("_id");
-            Field fObjectId = getFieldByAnnotation(document, ObjectId.class, false);
-            if (fObjectId != null) {
-                fObjectId.setAccessible(true);
-                fObjectId.set(document, _id);
+            Field field = getFieldByAnnotation(document, ObjectId.class, false);
+            if (field != null) {
+                field.setAccessible(true);
+                field.set(document, _id);
             }
         } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException | SecurityException | IllegalArgumentException | NoSuchFieldException ex) {
-            Logger.getLogger(CollectionManager.class.getName()).log(Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, "An error occured while inserting this document: {0}", ex.getMessage());
+        }
+        if (_id != null) {
+            LOG.log(Level.INFO, "Object \"{0}\" inserted successfully.", _id);
         }
         return _id;
     }
@@ -231,11 +262,11 @@ public final class CollectionManager implements Closeable {
 
     public void update(MongoQuery query, Object document, boolean upsert, boolean multi, WriteConcern concern) {
         try {
-            BasicDBObject obj = fillDBObject(document);
-            String collName = reflectAnnotation(document);
-            db.getCollection(collName).update(query.getQuery(), obj, upsert, multi, concern);
+            BasicDBObject obj = loadDocument(document);
+            String collectionName = reflectCollectionName(document);
+            db.getCollection(collectionName).update(query.getQuery(), obj, upsert, multi, concern);
         } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException | SecurityException | IllegalArgumentException ex) {
-            Logger.getLogger(CollectionManager.class.getName()).log(Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, null, ex);
         }
     }
 
@@ -253,69 +284,127 @@ public final class CollectionManager implements Closeable {
             return _id;
         }
         try {
-            BasicDBObject obj = fillDBObject(document);
-            String collName = reflectAnnotation(document);
-            /*WriteResult writeresult = */
-            db.getCollection(collName).save(obj);
+            BasicDBObject obj = loadDocument(document);
+            String collectionName = reflectCollectionName(document);
+            db.getCollection(collectionName).save(obj);
             _id = obj.getString("_id");
         } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
-            Logger.getLogger(CollectionManager.class.getName()).log(Level.SEVERE, null, ex);
+            LOG.log(Level.SEVERE, "An error occured while saving this document: {0}", ex.getMessage());
+        }
+        if (_id != null) {
+            LOG.log(Level.INFO, "Object \"{0}\" saved successfully.", _id);
         }
         return _id;
-        //Logger.getLogger(CollectionManager.class.getName()).log(Level.INFO, "Objeto {0} salvo com sucesso.",result);
     }
 
-    private BasicDBObject fillDBObject(Object document) throws SecurityException {
+    private BasicDBObject loadDocument(Object document) throws SecurityException {
+        Field[] fields = document.getClass().getDeclaredFields();
         BasicDBObject obj = new BasicDBObject();
-        System.out.println(document);
-        for (Field f : document.getClass().getDeclaredFields()) {
+        for (Field field : fields) {
             try {
-                f.setAccessible(true);
-                String fieldName = f.getName();
-                Object fieldContent = f.get(document);
+                field.setAccessible(true);
+                String fieldName = field.getName();
+                Object fieldContent = field.get(document);
+                if (fieldContent == null) {
+                    continue;
+                }
                 if (fieldContent instanceof List) {
                     BasicDBList list = new BasicDBList();
-                    boolean isInternal = f.isAnnotationPresent(Internal.class);
+                    boolean isInternal = field.isAnnotationPresent(Internal.class);
                     for (Object item : (List) fieldContent) {
                         if (isInternal) {
-                            list.add(fillDBObject(item));
+                            list.add(loadDocument(item));
                         } else {
                             list.add(item);
                         }
                     }
                     obj.append(fieldName, list);
-                } else if (fieldContent != null && f.getType().isEnum()) {
+                } else if (field.getType().isEnum()) {
                     obj.append(fieldName, fieldContent.toString());
-                } else if (fieldContent != null && f.isAnnotationPresent(Reference.class)) {
+                } else if (field.isAnnotationPresent(Reference.class)) {
                     obj.append(fieldName, new org.bson.types.ObjectId(save(fieldContent)));
-                } else if (fieldContent != null && f.isAnnotationPresent(Internal.class)) {
-                    obj.append(fieldName, fillDBObject(fieldContent));
-                } else if (!f.isAnnotationPresent(ObjectId.class)) {
+                } else if (field.isAnnotationPresent(Internal.class)) {
+                    obj.append(fieldName, loadDocument(fieldContent));
+                } else if (!field.isAnnotationPresent(ObjectId.class)) {
                     obj.append(fieldName, fieldContent);
-                } else if (fieldContent != null && !fieldContent.equals("")) {
+                } else if (!fieldContent.equals("")) {
                     obj.append("_id", new org.bson.types.ObjectId((String) fieldContent));
                 }
             } catch (IllegalArgumentException | IllegalAccessException ex) {
-                Logger.getLogger(CollectionManager.class.getName()).log(Level.SEVERE, null, ex);
+                LOG.log(Level.SEVERE, null, ex);
             }
         }
         return obj;
     }
 
-    private <A> Field getFieldByAnnotation(Object obj, Class<? extends Annotation> annotationClass, boolean annotationRequired) throws NoSuchFieldException {
-        Field[] fields = obj.getClass().getDeclaredFields();
-        for (Field f : fields) {
-            if (f.isAnnotationPresent(annotationClass)) {
-                return f;
+    private <A extends Object> void loadObject(A object, DBObject document) throws IllegalAccessException, IllegalArgumentException, SecurityException, InstantiationException {
+        Field[] fields = object.getClass().getDeclaredFields();
+        for (Field field : fields) {
+            field.setAccessible(true);
+            String fieldName = field.getName();
+            Object fieldContent = document.get(fieldName);
+            if (fieldContent == null) {
+                continue;
+            }
+            if (fieldContent instanceof BasicBSONList) {
+                Class<?> fieldArgClass = null;
+                ParameterizedType genericFieldType = (ParameterizedType) field.getGenericType();
+                Type[] fieldArgTypes = genericFieldType.getActualTypeArguments();
+                for (Type fieldArgType : fieldArgTypes) {
+                    fieldArgClass = (Class<?>) fieldArgType;
+                }
+                List<Object> list = new ArrayList<>();
+                boolean isInternal = field.isAnnotationPresent(Internal.class);
+                for (Object item : (BasicBSONList) fieldContent) {
+                    if (isInternal) {
+                        Object o = fieldArgClass.newInstance();
+                        loadObject(o, (DBObject) item);
+                        list.add(o);
+                    } else {
+                        list.add(item);
+                    }
+                }
+                field.set(object, list);
+            } else if (field.getType().isEnum()) {
+                field.set(object, Enum.valueOf((Class) field.getType(), (String) fieldContent));
+            } else if (field.isAnnotationPresent(ObjectId.class)) {
+                field.set(object, ((BasicDBObject) fieldContent).getString("_id"));
+            } else if (field.isAnnotationPresent(Reference.class)) {
+                field.set(object, findById(field.getType(), ((org.bson.types.ObjectId) fieldContent).toString()));
+            } else if (field.getType().isPrimitive()) {
+
+            } else {
+                field.set(object, fieldContent);
+
             }
         }
-        if (annotationRequired) {
+    }
+
+    private <A> Field getFieldByAnnotation(Object obj, Class<? extends Annotation> annotationClass, boolean annotationRequired) throws NoSuchFieldException {
+        Field[] fields = getFieldsByAnnotation(obj, annotationClass);
+        if ((fields.length == 0) && annotationRequired) {
             throw new NoSuchFieldException("@" + annotationClass.getSimpleName() + " field not found.");
+        } else if (fields.length > 0) {
+            if (fields.length > 1) {
+                LOG.log(Level.WARNING, "There are more than one @{0} field. Assuming the first one.", annotationClass.getSimpleName());
+            }
+            return fields[0];
         }
         return null;
     }
 
-    private String reflectAnnotation(Object document) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, SecurityException, IllegalArgumentException {
+    private <A> Field[] getFieldsByAnnotation(Object obj, Class<? extends Annotation> annotationClass) {
+        Field[] fields = obj.getClass().getDeclaredFields();
+        List<Field> fieldsAnnotated = new ArrayList<>();
+        for (Field field : fields) {
+            if (field.isAnnotationPresent(annotationClass)) {
+                fieldsAnnotated.add(field);
+            }
+        }
+        return (Field[]) fieldsAnnotated.toArray();
+    }
+
+    private String reflectCollectionName(Object document) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, SecurityException, IllegalArgumentException {
         Annotation annotation = document.getClass().getAnnotation(Document.class);
         String coll = (String) annotation.annotationType().getMethod("collection").invoke(annotation);
         if (coll.equals("")) {
