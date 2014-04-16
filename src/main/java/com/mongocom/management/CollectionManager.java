@@ -63,7 +63,11 @@ public final class CollectionManager implements Closeable {
         db.authenticate(user, password.toCharArray());
     }
 
-    public void useDB(String dbName) {
+    /**
+     * Uses the specified Database, creates one if it doesn't exist.
+     * @param dbName Database name
+     */
+    public void use(String dbName) {
         db = client.getDB(dbName);
     }
 
@@ -110,7 +114,7 @@ public final class CollectionManager implements Closeable {
     }
 
     /**
-     * Find all documents that match the specified query.
+     * Find all documents that match the specified query in the given collection.
      *
      * @param <A> generic type of the collection.
      * @param collectionClass
@@ -147,7 +151,7 @@ public final class CollectionManager implements Closeable {
     }
 
     /**
-     * Find a single document of the the specified collection.
+     * Find a single document of the specified collection.
      *
      * @param <A> generic type of the collection.
      * @param collectionClass
@@ -170,7 +174,7 @@ public final class CollectionManager implements Closeable {
     }
 
     /**
-     * Find a single document that matches the specified query.
+     * Find a single document that matches the specified query in the given collection.
      *
      * @param <A> generic type of the collection.
      * @param collectionClass
@@ -194,7 +198,7 @@ public final class CollectionManager implements Closeable {
     }
 
     /**
-     * Find a single document that matches the specified id.
+     * Find a single document that matches the specified id in the given collection.
      *
      * @param <A> generic type of the collection.
      * @param collectionClass
