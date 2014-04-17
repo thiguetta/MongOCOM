@@ -31,9 +31,11 @@ import com.mongocom.annotations.Internal;
 import com.mongocom.annotations.ObjectId;
 import com.mongocom.annotations.Reference;
 import com.mongodb.BasicDBList;
+import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
 import java.io.Closeable;
+import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
 import org.bson.types.BasicBSONList;
@@ -44,12 +46,12 @@ import org.bson.types.BasicBSONList;
  */
 public final class CollectionManager implements Closeable {
 
-    private final MongoClient client;
+    private final Mongo client;
     private DB db;
     private static final Logger LOG = Logger.getLogger(CollectionManager.class.getName());
 
     //TODO: a better way to manage db connection
-    protected CollectionManager(MongoClient client, String dataBase) {
+    protected CollectionManager(Mongo client, String dataBase) {
         this.client = client;
         if (dataBase != null && !dataBase.equals("")) {
             this.db = client.getDB(dataBase);
@@ -58,13 +60,18 @@ public final class CollectionManager implements Closeable {
         }
     }
 
-    protected CollectionManager(MongoClient client, String dbName, String user, String password) {
+    protected CollectionManager(Mongo client, String dbName, String user, String password) {
         this(client, dbName);
         db.authenticate(user, password.toCharArray());
     }
 
+    protected CollectionManager(Mongo client) {
+        this.client = client;
+    }
+
     /**
      * Uses the specified Database, creates one if it doesn't exist.
+     *
      * @param dbName Database name
      */
     public void use(String dbName) {
@@ -114,7 +121,8 @@ public final class CollectionManager implements Closeable {
     }
 
     /**
-     * Find all documents that match the specified query in the given collection.
+     * Find all documents that match the specified query in the given
+     * collection.
      *
      * @param <A> generic type of the collection.
      * @param collectionClass
@@ -174,7 +182,8 @@ public final class CollectionManager implements Closeable {
     }
 
     /**
-     * Find a single document that matches the specified query in the given collection.
+     * Find a single document that matches the specified query in the given
+     * collection.
      *
      * @param <A> generic type of the collection.
      * @param collectionClass
@@ -198,7 +207,8 @@ public final class CollectionManager implements Closeable {
     }
 
     /**
-     * Find a single document that matches the specified id in the given collection.
+     * Find a single document that matches the specified id in the given
+     * collection.
      *
      * @param <A> generic type of the collection.
      * @param collectionClass
@@ -384,7 +394,7 @@ public final class CollectionManager implements Closeable {
         }
     }
 
-    private <A> Field getFieldByAnnotation(Object obj, Class<? extends Annotation> annotationClass, boolean annotationRequired) throws NoSuchFieldException {
+    private Field getFieldByAnnotation(Object obj, Class<? extends Annotation> annotationClass, boolean annotationRequired) throws NoSuchFieldException {
         Field[] fields = getFieldsByAnnotation(obj, annotationClass);
         if ((fields.length == 0) && annotationRequired) {
             throw new NoSuchFieldException("@" + annotationClass.getSimpleName() + " field not found.");
@@ -397,7 +407,7 @@ public final class CollectionManager implements Closeable {
         return null;
     }
 
-    private <A> Field[] getFieldsByAnnotation(Object obj, Class<? extends Annotation> annotationClass) {
+    private Field[] getFieldsByAnnotation(Object obj, Class<? extends Annotation> annotationClass) {
         Field[] fields = obj.getClass().getDeclaredFields();
         List<Field> fieldsAnnotated = new ArrayList<>();
         for (Field field : fields) {
@@ -406,6 +416,29 @@ public final class CollectionManager implements Closeable {
             }
         }
         return (Field[]) fieldsAnnotated.toArray();
+    }
+
+    private void invokeAnnotatedMethods(Object obj, Class<? extends Annotation> annotationClass) {
+        Method[] methods = getMethodsByAnnotation(obj, annotationClass);
+        for (Method method : methods) {
+            try {
+                method.invoke(obj);
+            } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException ex) {
+                LOG.log(Level.SEVERE, null, ex);
+            }
+        }
+
+    }
+
+    private Method[] getMethodsByAnnotation(Object obj, Class<? extends Annotation> annotationClass) {
+        Method[] methods = obj.getClass().getDeclaredMethods();
+        List<Method> methodsAnnotated = new ArrayList<>();
+        for (Method method : methods) {
+            if (method.isAnnotationPresent(annotationClass)) {
+                methodsAnnotated.add(method);
+            }
+        }
+        return (Method[]) methodsAnnotated.toArray();
     }
 
     private String reflectCollectionName(Object document) throws NoSuchMethodException, InvocationTargetException, IllegalAccessException, SecurityException, IllegalArgumentException {
