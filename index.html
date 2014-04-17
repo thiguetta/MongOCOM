@@ -31,11 +31,56 @@
           <h3>
 <a name="welcome-to-mongocom-project-page" class="anchor" href="#welcome-to-mongocom-project-page"><span class="octicon octicon-link"></span></a>Welcome to MongOCOM Project Page.</h3>
 
-<p>Mongo Object-Collection Mapper (MongOCOM) is an Object-oriented document mapper for <a href="http://mongodb.org">mongoDB</a>. If you want to help us, feel free to clone our repository:</p>
+<p>Mongo Object-Collection Mapper (MongOCOM) is an Object-oriented document mapper for <a href="http://mongodb.org">mongoDB</a>.</p>
 
-<pre><code>$ git clone git@github.com:javaboybr/MongOCOM.git
+<h3>
+<a name="make-your-code-readable" class="anchor" href="#make-your-code-readable"><span class="octicon octicon-link"></span></a>Make your code readable.</h3>
 
-</code></pre>
+<p>Using simple annotation concepts you can model your database easily, like this:</p>
+
+<div class="highlight highlight-java"><pre><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">example</span><span class="o">.</span><span class="na">collections</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">com.mongocom.annotations.Document</span><span class="o">;</span>
+
+<span class="nd">@Document</span>
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Contact</span> <span class="o">{</span>
+
+    <span class="nd">@ObjectId</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">id</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">name</span><span class="o">;</span>
+    <span class="kd">private</span> <span class="n">String</span> <span class="n">email</span><span class="o">;</span>
+
+    <span class="c1">//getters and setters go here.</span>
+<span class="o">}</span>
+</pre></div>
+
+<h3>
+<a name="easy-to-use" class="anchor" href="#easy-to-use"><span class="octicon octicon-link"></span></a>Easy to use.</h3>
+
+<p>MongOCOM is easy to use, no XML or complex configuration needed, just set up your project, add the library to the class path and start coding. </p>
+
+<div class="highlight highlight-java"><pre><span class="kn">package</span> <span class="n">com</span><span class="o">.</span><span class="na">example</span><span class="o">.</span><span class="na">main</span><span class="o">;</span>
+
+<span class="kn">import</span> <span class="nn">com.example.collections.Contact</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">com.mongocom.management.CollectionManager</span><span class="o">;</span>
+<span class="kn">import</span> <span class="nn">com.mongocom.management.CollectionManagerFactory</span><span class="o">;</span>
+
+<span class="kd">public</span> <span class="kd">class</span> <span class="nc">Example</span> <span class="o">{</span>
+
+    <span class="kd">public</span> <span class="kd">static</span> <span class="kt">void</span> <span class="nf">main</span><span class="o">(</span><span class="n">String</span><span class="o">[]</span> <span class="n">args</span><span class="o">){</span>
+        <span class="n">CollectionManager</span> <span class="n">cm</span> <span class="o">=</span> <span class="n">CollectionManagerFactory</span><span class="o">.</span><span class="na">setup</span><span class="o">();</span>
+        <span class="n">Contact</span> <span class="n">myFirstContact</span> <span class="o">=</span> <span class="k">new</span> <span class="n">Contact</span><span class="o">();</span>
+        <span class="n">myFirstContact</span><span class="o">.</span><span class="na">setName</span><span class="o">(</span><span class="s">"My Name"</span><span class="o">);</span>
+        <span class="n">myFirstContact</span><span class="o">.</span><span class="na">setEmail</span><span class="o">(</span><span class="s">"my_email@server.com"</span><span class="o">);</span>
+        <span class="n">cm</span><span class="o">.</span><span class="na">insert</span><span class="o">(</span><span class="n">myFirstContact</span><span class="o">);</span>
+        <span class="n">System</span><span class="o">.</span><span class="na">out</span><span class="o">.</span><span class="na">println</span><span class="o">(</span><span class="s">"Contact _id: "</span> <span class="o">+</span> <span class="n">myFirstContact</span><span class="o">.</span><span class="na">getId</span><span class="o">()</span>
+                                           <span class="o">+</span> <span class="s">" inserted successfully."</span><span class="o">);</span>
+    <span class="o">}</span>
+
+<span class="o">}</span>
+</pre></div>
+
+<p>If you want to help us, feel free to fork or contribute.</p>
         </section>
 
         <aside id="sidebar">
