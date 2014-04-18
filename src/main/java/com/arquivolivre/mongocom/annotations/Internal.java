@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 
-package com.mongocom.annotations;
+package com.arquivolivre.mongocom.annotations;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
@@ -26,7 +26,7 @@ import java.lang.annotation.Target;
  * @author Thiago da Silva Gonzaga <thiagosg@sjrp.unesp.br>.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.FIELD)
-public @interface ObjectId {
-    
+@Target({ElementType.FIELD, ElementType.TYPE})
+public @interface Internal {
+
 }

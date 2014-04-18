@@ -4,7 +4,7 @@
  * and open the template in the editor.
  */
 
-package com.mongocom.exceptions;
+package com.arquivolivre.mongocom.exceptions;
 
 /**
  *

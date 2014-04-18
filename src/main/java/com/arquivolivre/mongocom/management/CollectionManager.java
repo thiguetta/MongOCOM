@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongocom.management;
+package com.arquivolivre.mongocom.management;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DB;
@@ -26,10 +26,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import com.mongocom.annotations.Document;
-import com.mongocom.annotations.Internal;
-import com.mongocom.annotations.ObjectId;
-import com.mongocom.annotations.Reference;
+import com.arquivolivre.mongocom.annotations.Document;
+import com.arquivolivre.mongocom.annotations.Internal;
+import com.arquivolivre.mongocom.annotations.ObjectId;
+import com.arquivolivre.mongocom.annotations.Reference;
 import com.mongodb.BasicDBList;
 import com.mongodb.Mongo;
 import com.mongodb.MongoClient;

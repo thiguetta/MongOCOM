@@ -1,5 +1,5 @@
 /*
- * Copyright 2014 Thiago da Silva Gonzaga <thiagosg@sjrp.unesp.br>.
+ * Copyright 2014 Thiago da Silva Gonzaga <thiagosg@sjrp.unesp.br>..
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,12 +14,13 @@
  * limitations under the License.
  */
 
-package com.mongocom.types;
+package com.arquivolivre.mongocom.types;
 
 /**
  *
- * @author Thiago da Silva Gonzaga <thiagosg@sjrp.unesp.br>
+ * @author Thiago da Silva Gonzaga <thiagosg@sjrp.unesp.br>.
  */
-public enum Action {
-    ON_UPDATE, ON_INSERT, ON_REMOVE
+public enum TriggerType {
+
+    BEFORE, AFTER
 }

@@ -1,4 +1,4 @@
-package com.mongocom.tests;
+package com.arquivolivre.mongocom.tests;
 
 import junit.framework.Test;
 import junit.framework.TestCase;

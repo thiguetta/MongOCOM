@@ -13,10 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.mongocom.annotations;
 
-import com.mongocom.types.Action;
-import com.mongocom.types.TriggerType;
+package com.arquivolivre.mongocom.annotations;
+
+import com.arquivolivre.mongocom.types.IndexOrder;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -27,11 +27,15 @@ import java.lang.annotation.Target;
  * @author Thiago da Silva Gonzaga <thiagosg@sjrp.unesp.br>.
  */
 @Retention(RetentionPolicy.RUNTIME)
-@Target(ElementType.METHOD)
-public @interface Trigger {
+@Target(ElementType.FIELD)
+public @interface Index {
 
-    Action value();
+    String name() default "";
 
-    TriggerType when() default TriggerType.BEFORE;
+    boolean unique() default false;
+    
+    boolean sparse() default false;
+
+    IndexOrder order() default IndexOrder.INDEX_ASCENDING;
 
 }

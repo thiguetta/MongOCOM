@@ -14,9 +14,8 @@
  * limitations under the License.
  */
 
-package com.mongocom.annotations;
+package com.arquivolivre.mongocom.annotations;
 
-import com.mongocom.types.IndexOrder;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -28,14 +27,6 @@ import java.lang.annotation.Target;
  */
 @Retention(RetentionPolicy.RUNTIME)
 @Target(ElementType.FIELD)
-public @interface Index {
-
-    String name() default "";
-
-    boolean unique() default false;
+public @interface ObjectId {
     
-    boolean sparse() default false;
-
-    IndexOrder order() default IndexOrder.INDEX_ASCENDING;
-
 }

@@ -2,13 +2,13 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
-    <groupId>com.mongocom</groupId>
+    <groupId>com.arquivolivre.mongocom</groupId>
     <artifactId>mongocom</artifactId>
     <name>MongOCOM</name>
     <version>0.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     <description>The Mongo Object COllection Mapper</description>
-    <url>http://javaboybr.github.io/MongOCOM</url>
+    <url>http://http://mongocom.arquivolivre.com</url>
     
     <licenses>
         <license>

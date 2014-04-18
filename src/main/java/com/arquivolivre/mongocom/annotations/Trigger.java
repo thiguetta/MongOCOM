@@ -13,14 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.arquivolivre.mongocom.annotations;
 
-package com.mongocom.types;
+import com.arquivolivre.mongocom.types.Action;
+import com.arquivolivre.mongocom.types.TriggerType;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 
 /**
  *
  * @author Thiago da Silva Gonzaga <thiagosg@sjrp.unesp.br>.
  */
-public enum TriggerType {
+@Retention(RetentionPolicy.RUNTIME)
+@Target(ElementType.METHOD)
+public @interface Trigger {
 
-    BEFORE, AFTER
+    Action value();
+
+    TriggerType when() default TriggerType.BEFORE;
+
 }
