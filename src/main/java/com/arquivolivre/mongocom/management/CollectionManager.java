@@ -27,12 +27,14 @@ import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import com.arquivolivre.mongocom.annotations.Document;
+import com.arquivolivre.mongocom.annotations.GeneratedValue;
+import com.arquivolivre.mongocom.annotations.Id;
 import com.arquivolivre.mongocom.annotations.Internal;
 import com.arquivolivre.mongocom.annotations.ObjectId;
 import com.arquivolivre.mongocom.annotations.Reference;
+import com.arquivolivre.mongocom.utils.Generator;
 import com.mongodb.BasicDBList;
 import com.mongodb.Mongo;
-import com.mongodb.MongoClient;
 import com.mongodb.WriteConcern;
 import java.io.Closeable;
 import java.lang.reflect.Method;
@@ -229,7 +231,7 @@ public final class CollectionManager implements Closeable {
             BasicDBObject obj = loadDocument(document);
             String collectionName = reflectCollectionName(document);
             db.getCollection(collectionName).remove(obj);
-        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException | SecurityException | IllegalArgumentException ex) {
+        } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | SecurityException | IllegalArgumentException ex) {
             LOG.log(Level.SEVERE, "An error occured while removing this document: {0}", ex.getMessage());
         }
 
@@ -257,7 +259,7 @@ public final class CollectionManager implements Closeable {
                 field.setAccessible(true);
                 field.set(document, _id);
             }
-        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException | SecurityException | IllegalArgumentException | NoSuchFieldException ex) {
+        } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | SecurityException | IllegalArgumentException | NoSuchFieldException ex) {
             LOG.log(Level.SEVERE, "An error occured while inserting this document: {0}", ex.getMessage());
         }
         if (_id != null) {
@@ -279,7 +281,7 @@ public final class CollectionManager implements Closeable {
             BasicDBObject obj = loadDocument(document);
             String collectionName = reflectCollectionName(document);
             db.getCollection(collectionName).update(query.getQuery(), obj, upsert, multi, concern);
-        } catch (NoSuchMethodException | InvocationTargetException | IllegalAccessException | SecurityException | IllegalArgumentException ex) {
+        } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | SecurityException | IllegalArgumentException ex) {
             LOG.log(Level.SEVERE, null, ex);
         }
     }
@@ -302,7 +304,7 @@ public final class CollectionManager implements Closeable {
             String collectionName = reflectCollectionName(document);
             db.getCollection(collectionName).save(obj);
             _id = obj.getString("_id");
-        } catch (IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
+        } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
             LOG.log(Level.SEVERE, "An error occured while saving this document: {0}", ex.getMessage());
         }
         if (_id != null) {
@@ -311,7 +313,7 @@ public final class CollectionManager implements Closeable {
         return _id;
     }
 
-    private BasicDBObject loadDocument(Object document) throws SecurityException {
+    private BasicDBObject loadDocument(Object document) throws SecurityException, InstantiationException, InvocationTargetException, NoSuchMethodException {
         Field[] fields = document.getClass().getDeclaredFields();
         BasicDBObject obj = new BasicDBObject();
         for (Field field : fields) {
@@ -319,7 +321,7 @@ public final class CollectionManager implements Closeable {
                 field.setAccessible(true);
                 String fieldName = field.getName();
                 Object fieldContent = field.get(document);
-                if (fieldContent == null) {
+                if (fieldContent == null && !field.isAnnotationPresent(GeneratedValue.class)) {
                     continue;
                 }
                 if (fieldContent instanceof List) {
@@ -339,6 +341,13 @@ public final class CollectionManager implements Closeable {
                     obj.append(fieldName, new org.bson.types.ObjectId(save(fieldContent)));
                 } else if (field.isAnnotationPresent(Internal.class)) {
                     obj.append(fieldName, loadDocument(fieldContent));
+                } else if (field.isAnnotationPresent(Id.class) && !fieldContent.equals("")) {
+                    obj.append(fieldName, reflectId(field));
+                } else if (field.isAnnotationPresent(GeneratedValue.class)) {
+                    Object value = reflectGeneratedValue(field, fieldContent);
+                    if (value != null) {
+                        obj.append(fieldName, value);
+                    }
                 } else if (!field.isAnnotationPresent(ObjectId.class)) {
                     obj.append(fieldName, fieldContent);
                 } else if (!fieldContent.equals("")) {
@@ -357,9 +366,6 @@ public final class CollectionManager implements Closeable {
             field.setAccessible(true);
             String fieldName = field.getName();
             Object fieldContent = document.get(fieldName);
-            if (fieldContent == null) {
-                continue;
-            }
             if (fieldContent instanceof BasicBSONList) {
                 Class<?> fieldArgClass = null;
                 ParameterizedType genericFieldType = (ParameterizedType) field.getGenericType();
@@ -379,17 +385,15 @@ public final class CollectionManager implements Closeable {
                     }
                 }
                 field.set(object, list);
-            } else if (field.getType().isEnum()) {
+            } else if ((fieldContent != null) && field.getType().isEnum()) {
                 field.set(object, Enum.valueOf((Class) field.getType(), (String) fieldContent));
-            } else if (field.isAnnotationPresent(ObjectId.class)) {
-                field.set(object, ((BasicDBObject) fieldContent).getString("_id"));
-            } else if (field.isAnnotationPresent(Reference.class)) {
+            } else if ((fieldContent != null) && field.isAnnotationPresent(Reference.class)) {
                 field.set(object, findById(field.getType(), ((org.bson.types.ObjectId) fieldContent).toString()));
-            } else if (field.getType().isPrimitive()) {
-
-            } else {
+            } else if (field.isAnnotationPresent(ObjectId.class)) {
+                field.set(object, ((org.bson.types.ObjectId) document.get("_id")).toString());
+            } else if (field.getType().isPrimitive() && (fieldContent == null)) {
+            } else if (fieldContent != null) {
                 field.set(object, fieldContent);
-
             }
         }
     }
@@ -415,7 +419,8 @@ public final class CollectionManager implements Closeable {
                 fieldsAnnotated.add(field);
             }
         }
-        return (Field[]) fieldsAnnotated.toArray();
+        fields = new Field[fieldsAnnotated.size()];
+        return fieldsAnnotated.toArray(fields);
     }
 
     private void invokeAnnotatedMethods(Object obj, Class<? extends Annotation> annotationClass) {
@@ -448,6 +453,29 @@ public final class CollectionManager implements Closeable {
             coll = document.getClass().getSimpleName();
         }
         return coll;
+    }
+
+    private <A extends Object> A reflectId(Field field) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, InstantiationException {
+        Annotation annotation = field.getAnnotation(Id.class);
+        Boolean autoIncrement = (Boolean) annotation.annotationType().getMethod("autoIncrement").invoke(annotation);
+        Class generator = (Class) annotation.annotationType().getMethod("generator").invoke(annotation);
+        if (autoIncrement) {
+            Generator g = (Generator) generator.newInstance();
+            return g.generateValue(field.getDeclaringClass(), db);
+        }
+        return null;
+    }
+
+    private <A extends Object> A reflectGeneratedValue(Field field, Object oldValue) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, InstantiationException {
+        Annotation annotation = field.getAnnotation(GeneratedValue.class);
+        Class<? extends Annotation> annotationType = annotation.annotationType();
+        Boolean update = (Boolean) annotationType.getMethod("update").invoke(annotation);
+        Class generator = (Class) annotationType.getMethod("generator").invoke(annotation);
+        if ((update && (oldValue != null)) || (oldValue == null)) {
+            Generator g = (Generator) generator.newInstance();
+            return g.generateValue(field.getDeclaringClass(), db);
+        }
+        return null;
     }
 
     public String getStatus() {
