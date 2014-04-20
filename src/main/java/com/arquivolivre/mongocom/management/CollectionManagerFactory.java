@@ -28,10 +28,12 @@ import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.net.URLConnection;
 import java.net.UnknownHostException;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import org.jboss.vfs.VirtualFile;
 
 /**
  *
@@ -130,10 +132,27 @@ public final class CollectionManagerFactory {
     }
 
     private static File getPropertiesFile() throws FileNotFoundException {
-        URL u = CollectionManagerFactory.class.getProtectionDomain().getCodeSource().getLocation();
-        LOG.log(Level.INFO, u.toExternalForm());
-        File parent = new File(u.toExternalForm()).getParentFile().getParentFile();
-        LOG.log(Level.INFO, parent.listFiles().toString());
+        URI uri = null;
+        try {
+            URL url = CollectionManagerFactory.class.getProtectionDomain().getCodeSource().getLocation();
+            LOG.log(Level.INFO, url.toString());
+            boolean isVsf = url.toString().startsWith("vsf:");
+            if (isVsf) {
+                URLConnection conn = url.openConnection();
+                VirtualFile vf = (VirtualFile) conn.getContent();
+                uri = vf.getPhysicalFile().toURI();
+            } else {
+                uri = url.toURI();
+            }
+        } catch (IOException | URISyntaxException ex) {
+            LOG.log(Level.SEVERE, null, ex);
+        }
+        File parent = new File(uri);
+        if (parent.isFile()) {
+            parent = parent.getParentFile().getParentFile();
+        } else {
+            parent = parent.getParentFile();
+        }
         File dir = new File(parent.getAbsolutePath() + "/conf");
         LOG.log(Level.INFO, dir.getAbsolutePath());
         File result = null;
