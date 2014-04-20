@@ -5,7 +5,7 @@
     <groupId>com.arquivolivre</groupId>
     <artifactId>mongocom</artifactId>
     <name>MongOCOM</name>
-    <version>0.2-SNAPSHOT</version>
+    <version>0.2.1-SNAPSHOT</version>
     <packaging>jar</packaging>
     <description>The Mongo Object COllection Mapper</description>
     <url>http://mongocom.arquivolivre.com</url>
@@ -70,7 +70,7 @@
     <parent>
         <groupId>org.sonatype.oss</groupId>
         <artifactId>oss-parent</artifactId>
-        <version>7</version>
+        <version>9</version>
     </parent>
   
 </project>

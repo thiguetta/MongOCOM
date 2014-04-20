@@ -25,6 +25,9 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.URI;
+import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -35,32 +38,32 @@ import java.util.logging.Logger;
  * @author Thiago da Silva Gonzaga <thiagosg@sjrp.unesp.br>
  */
 public final class CollectionManagerFactory {
-    
+
     private static Mongo client;
     private static final Logger LOG = Logger.getLogger(CollectionManagerFactory.class.getName());
     private static final String[] FILES = {"application", "database"};
     private static final String[] EXTENTIONS = {".conf", ".config", ".properties"};
-    
+
     public static CollectionManager createCollectionManager() {
         return createBaseCollectionManager("", 0, "", "", "");
     }
-    
+
     public static CollectionManager createCollectionManager(String host) {
         return createBaseCollectionManager(host, 0, "", "", "");
     }
-    
+
     public static CollectionManager createCollectionManager(String host, int port) {
         return createBaseCollectionManager(host, port, "", "", "");
     }
-    
+
     public static CollectionManager createCollectionManager(String dbName, String user, String password) {
         return createBaseCollectionManager("", 0, dbName, user, password);
     }
-    
+
     public static CollectionManager createCollectionManager(String host, int port, String dbName, String user, String password) {
         return createBaseCollectionManager(host, port, dbName, user, password);
     }
-    
+
     private static CollectionManager createBaseCollectionManager(String host, int port, String dbName, String user, String password) {
         try {
             if ("".equals(host)) {
@@ -82,7 +85,7 @@ public final class CollectionManagerFactory {
         }
         return null;
     }
-    
+
     public static CollectionManager setup() {
         try {
             File props = getPropertiesFile();
@@ -111,9 +114,8 @@ public final class CollectionManagerFactory {
             if (!port.equals("")) {
                 builder.append(":");
                 builder.append(port);
-            } else {
-                builder.append("/");
             }
+            builder.append("/");
             if (!dbName.equals("")) {
                 builder.append(dbName);
             }
@@ -126,14 +128,21 @@ public final class CollectionManagerFactory {
         }
         return null;
     }
-    
+
     private static File getPropertiesFile() throws FileNotFoundException {
-        File dir = new File("conf/");
+        URI uri = null;
+        try {
+            uri = CollectionManagerFactory.class.getProtectionDomain().getCodeSource().getLocation().toURI();
+        } catch (URISyntaxException ex) {
+        }
+        File parent = new File(uri).getParentFile().getParentFile();
+        File dir = new File(parent.getAbsolutePath() + "/conf");
+        LOG.log(Level.INFO, dir.getAbsolutePath());
         File result = null;
         if (!dir.isDirectory()) {
             throw new FileNotFoundException("The \"conf/\" folder doesn't exist.");
         }
-        
+
         FileFilter filter = new FileFilter() {
             @Override
             public boolean accept(File pathname) {
@@ -146,7 +155,7 @@ public final class CollectionManagerFactory {
                 return false;
             }
         };
-        
+
         File[] files = dir.listFiles(filter);
         for (File file : files) {
             String fileName = file.getName();
