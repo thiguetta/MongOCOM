@@ -130,16 +130,9 @@ public final class CollectionManagerFactory {
     }
 
     private static File getPropertiesFile() throws FileNotFoundException {
-        URI uri = null;
-        try {
-            URL u = CollectionManagerFactory.class.getProtectionDomain().getCodeSource().getLocation();
-            LOG.log(Level.INFO, u.getPath());
-            uri = u.toURI();
-            LOG.log(Level.INFO, uri.toString());
-        } catch (URISyntaxException ex) {
-            LOG.log(Level.SEVERE, null, ex);
-        }
-        File parent = new File(uri).getParentFile().getParentFile();
+        URL u = CollectionManagerFactory.class.getProtectionDomain().getCodeSource().getLocation();
+        LOG.log(Level.INFO, u.getPath());
+        File parent = new File(u.getPath()).getParentFile().getParentFile();
         File dir = new File(parent.getAbsolutePath() + "/conf");
         LOG.log(Level.INFO, dir.getAbsolutePath());
         File result = null;
