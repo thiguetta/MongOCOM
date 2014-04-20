@@ -136,8 +136,9 @@ public final class CollectionManagerFactory {
         try {
             URL url = CollectionManagerFactory.class.getProtectionDomain().getCodeSource().getLocation();
             LOG.log(Level.INFO, url.toString());
-            boolean isVsf = url.toString().startsWith("vsf:");
+            boolean isVsf = url.toString().startsWith("vfs:");
             if (isVsf) {
+                //needed for jboss
                 URLConnection conn = url.openConnection();
                 VirtualFile vf = (VirtualFile) conn.getContent();
                 uri = vf.getPhysicalFile().toURI();
