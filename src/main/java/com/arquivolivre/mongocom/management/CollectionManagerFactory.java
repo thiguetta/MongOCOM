@@ -133,6 +133,7 @@ public final class CollectionManagerFactory {
         URL u = CollectionManagerFactory.class.getProtectionDomain().getCodeSource().getLocation();
         LOG.log(Level.INFO, u.getPath());
         File parent = new File(u.getPath()).getParentFile().getParentFile();
+        LOG.log(Level.INFO, parent.listFiles().toString());
         File dir = new File(parent.getAbsolutePath() + "/conf");
         LOG.log(Level.INFO, dir.getAbsolutePath());
         File result = null;
