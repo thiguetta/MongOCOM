@@ -27,6 +27,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -131,7 +132,8 @@ public final class CollectionManagerFactory {
     private static File getPropertiesFile() throws FileNotFoundException {
         URI uri = null;
         try {
-            uri = CollectionManagerFactory.class.getProtectionDomain().getCodeSource().getLocation().toURI();
+            URL u = CollectionManagerFactory.class.getProtectionDomain().getCodeSource().getLocation();
+            uri = u.toURI();
             LOG.log(Level.INFO, uri.toString());
         } catch (URISyntaxException ex) {
             LOG.log(Level.SEVERE, null, ex);
