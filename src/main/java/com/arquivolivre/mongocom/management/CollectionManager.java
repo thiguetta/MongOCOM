@@ -471,9 +471,17 @@ public final class CollectionManager implements Closeable {
         Class<? extends Annotation> annotationType = annotation.annotationType();
         Boolean update = (Boolean) annotationType.getMethod("update").invoke(annotation);
         Class generator = (Class) annotationType.getMethod("generator").invoke(annotation);
+        Generator g = (Generator) generator.newInstance();
         if ((update && (oldValue != null)) || (oldValue == null)) {
-            Generator g = (Generator) generator.newInstance();
             return g.generateValue(field.getDeclaringClass(), db);
+        } else if (oldValue instanceof Number) {
+            
+            boolean test = oldValue.equals(oldValue.getClass().cast(0));
+            if (test) {
+                return g.generateValue(field.getDeclaringClass(), db);
+            } else if (update) {
+                return g.generateValue(field.getDeclaringClass(), db);
+            }
         }
         return null;
     }
