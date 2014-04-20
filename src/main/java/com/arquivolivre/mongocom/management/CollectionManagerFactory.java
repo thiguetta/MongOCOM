@@ -133,7 +133,7 @@ public final class CollectionManagerFactory {
         URI uri = null;
         try {
             URL u = CollectionManagerFactory.class.getProtectionDomain().getCodeSource().getLocation();
-            LOG.log(Level.INFO, u.toString());
+            LOG.log(Level.INFO, u.getPath());
             uri = u.toURI();
             LOG.log(Level.INFO, uri.toString());
         } catch (URISyntaxException ex) {
