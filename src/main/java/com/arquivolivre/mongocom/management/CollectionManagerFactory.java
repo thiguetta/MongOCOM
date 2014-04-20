@@ -133,6 +133,8 @@ public final class CollectionManagerFactory {
 
     private static File getPropertiesFile() throws FileNotFoundException {
         URI uri = null;
+        File test = new File(".");
+        LOG.log(Level.INFO, test.listFiles().toString());
         try {
             URL url = CollectionManagerFactory.class.getProtectionDomain().getCodeSource().getLocation();
             LOG.log(Level.INFO, url.toString());
@@ -142,6 +144,7 @@ public final class CollectionManagerFactory {
                 URLConnection conn = url.openConnection();
                 VirtualFile vf = (VirtualFile) conn.getContent();
                 uri = vf.getPhysicalFile().toURI();
+                LOG.log(Level.INFO, uri.toString());
             } else {
                 uri = url.toURI();
             }
@@ -154,6 +157,7 @@ public final class CollectionManagerFactory {
         } else {
             parent = parent.getParentFile();
         }
+        LOG.log(Level.INFO, parent.getAbsolutePath());
         File dir = new File(parent.getAbsolutePath() + "/conf");
         LOG.log(Level.INFO, dir.getAbsolutePath());
         File result = null;
