@@ -152,11 +152,7 @@ public final class CollectionManagerFactory {
             LOG.log(Level.SEVERE, null, ex);
         }
         File parent = new File(uri);
-        if (parent.isFile()) {
-            parent = parent.getParentFile().getParentFile();
-        } else {
-            parent = parent.getParentFile();
-        }
+        parent = parent.getParentFile().getParentFile();
         LOG.log(Level.INFO, parent.getAbsolutePath());
         File dir = new File(parent.getAbsolutePath() + "/conf");
         LOG.log(Level.INFO, dir.getAbsolutePath());
