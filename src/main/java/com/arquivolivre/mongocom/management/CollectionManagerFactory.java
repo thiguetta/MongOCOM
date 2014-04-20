@@ -27,7 +27,6 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Properties;
 import java.util.logging.Level;
@@ -134,6 +133,7 @@ public final class CollectionManagerFactory {
         try {
             uri = CollectionManagerFactory.class.getProtectionDomain().getCodeSource().getLocation().toURI();
         } catch (URISyntaxException ex) {
+            LOG.log(Level.SEVERE, null, ex);
         }
         File parent = new File(uri).getParentFile().getParentFile();
         File dir = new File(parent.getAbsolutePath() + "/conf");
