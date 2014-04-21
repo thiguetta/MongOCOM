@@ -18,22 +18,9 @@ package com.arquivolivre.mongocom.management;
 import com.mongodb.Mongo;
 import com.mongodb.MongoClient;
 import com.mongodb.MongoException;
-import com.mongodb.MongoURI;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.FileInputStream;
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
-import java.net.URLConnection;
 import java.net.UnknownHostException;
-import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
-import org.jboss.vfs.VirtualFile;
 
 /**
  *
@@ -43,8 +30,8 @@ public final class CollectionManagerFactory {
 
     private static Mongo client;
     private static final Logger LOG = Logger.getLogger(CollectionManagerFactory.class.getName());
-    private static final String[] FILES = {"application", "database"};
-    private static final String[] EXTENTIONS = {".conf", ".config", ".properties"};
+    //private static final String[] FILES = {"application", "database"};
+    //private static final String[] EXTENTIONS = {".conf", ".config", ".properties"};
 
     public static CollectionManager createCollectionManager() {
         return createBaseCollectionManager("", 0, "", "", "");
@@ -88,6 +75,7 @@ public final class CollectionManagerFactory {
         return null;
     }
 
+    /*TODO: improve the way config file is read
     public static CollectionManager setup() {
         try {
             File props = getPropertiesFile();
@@ -185,5 +173,5 @@ public final class CollectionManagerFactory {
             }
         }
         return result;
-    }
+    }*/
 }
