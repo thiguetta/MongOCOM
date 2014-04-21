@@ -133,8 +133,8 @@ public final class CollectionManagerFactory {
 
     private static File getPropertiesFile() throws FileNotFoundException {
         URI uri = null;
-        File test = new File("../");
-        LOG.log(Level.INFO, test.listFiles().toString());
+        String s = System.getProperty("user.dir");
+        LOG.log(Level.INFO, s);
         try {
             URL url = CollectionManagerFactory.class.getProtectionDomain().getCodeSource().getLocation();
             LOG.log(Level.INFO, url.toString());
