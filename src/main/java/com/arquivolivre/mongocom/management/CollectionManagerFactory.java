@@ -133,7 +133,7 @@ public final class CollectionManagerFactory {
 
     private static File getPropertiesFile() throws FileNotFoundException {
         URI uri = null;
-        File test = new File(".");
+        File test = new File("../");
         LOG.log(Level.INFO, test.listFiles().toString());
         try {
             URL url = CollectionManagerFactory.class.getProtectionDomain().getCodeSource().getLocation();
@@ -153,6 +153,7 @@ public final class CollectionManagerFactory {
         }
         File parent = new File(uri);
         parent = parent.getParentFile().getParentFile();
+        LOG.log(Level.INFO, parent.listFiles().toString());
         LOG.log(Level.INFO, parent.getAbsolutePath());
         File dir = new File(parent.getAbsolutePath() + "/conf");
         LOG.log(Level.INFO, dir.getAbsolutePath());
