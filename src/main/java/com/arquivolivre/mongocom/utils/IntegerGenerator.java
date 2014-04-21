@@ -36,7 +36,7 @@ public class IntegerGenerator implements Generator {
         } else {
             o = new BasicDBObject("generatedValue", value);
         }
-        o.put("generateValue", ++value);
+        o.put("generatedValue", ++value);
         collection.save(o);
         return value;
     }
