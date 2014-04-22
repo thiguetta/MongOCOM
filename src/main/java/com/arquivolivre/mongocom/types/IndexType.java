@@ -19,8 +19,11 @@ package com.arquivolivre.mongocom.types;
  *
  * @author Thiago da Silva Gonzaga <thiagosg@sjrp.unesp.br>.
  */
-public enum IndexOrder {
+public class IndexType {
 
-    INDEX_ASCENDING, INDEX_DESCENDING
+    public static final int INDEX_ASCENDING = 1;
+    public static final int INDEX_DESCENDING = -1;
+    public static final String INDEX_TEXT = "text";
+    public static final String INDEX_HASHED = "hashed";
 
 }
