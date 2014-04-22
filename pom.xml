@@ -5,7 +5,7 @@
     <groupId>com.arquivolivre</groupId>
     <artifactId>mongocom</artifactId>
     <name>MongOCOM</name>
-    <version>0.2.1-SNAPSHOT</version>
+    <version>0.2.3-SNAPSHOT</version>
     <packaging>jar</packaging>
     <description>The Mongo Object COllection Mapper</description>
     <url>http://mongocom.arquivolivre.com</url>
@@ -50,6 +50,11 @@
             <groupId>org.mongodb</groupId>
             <artifactId>mongo-java-driver</artifactId>
             <version>2.11.4</version>
+        </dependency>
+        <dependency>
+            <groupId>javax</groupId>
+            <artifactId>javaee-web-api</artifactId>
+            <version>7.0</version>
         </dependency>
     </dependencies>
   

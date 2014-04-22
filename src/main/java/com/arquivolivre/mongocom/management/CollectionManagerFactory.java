@@ -25,13 +25,11 @@ import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URI;
-import java.net.URISyntaxException;
-import java.net.URL;
 import java.net.UnknownHostException;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import javax.servlet.ServletContext;
 
 /**
  *
@@ -86,9 +84,9 @@ public final class CollectionManagerFactory {
         return null;
     }
 
-    public static CollectionManager setup() {
+    public static CollectionManager setup(ServletContext context) {
         try {
-            File props = getPropertiesFile();
+            File props = getPropertiesFile(context);
             if (props == null) {
                 throw new FileNotFoundException("application or database configuration file not found.");
             }
@@ -129,14 +127,14 @@ public final class CollectionManagerFactory {
         return null;
     }
 
-    private static File getPropertiesFile() throws FileNotFoundException {
-        URI uri = null;
-        try {
-            uri = CollectionManagerFactory.class.getProtectionDomain().getCodeSource().getLocation().toURI();
-        } catch (URISyntaxException ex) {
+    private static File getPropertiesFile(ServletContext context) throws FileNotFoundException {
+        String contextPath;
+        if (context != null) {
+            contextPath = context.getRealPath("WEB-INF");
+        } else {
+            contextPath = System.getProperty("user.dir");
         }
-        File parent = new File(uri).getParentFile().getParentFile();
-        File dir = new File(parent.getAbsolutePath() + "/conf");
+        File dir = new File(contextPath + "/conf");
         LOG.log(Level.INFO, dir.getAbsolutePath());
         File result = null;
         if (!dir.isDirectory()) {
@@ -167,4 +165,5 @@ public final class CollectionManagerFactory {
         }
         return result;
     }
+
 }
