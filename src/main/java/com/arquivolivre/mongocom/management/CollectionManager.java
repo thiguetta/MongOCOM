@@ -32,14 +32,20 @@ import com.arquivolivre.mongocom.annotations.Id;
 import com.arquivolivre.mongocom.annotations.Internal;
 import com.arquivolivre.mongocom.annotations.ObjectId;
 import com.arquivolivre.mongocom.annotations.Reference;
+import com.arquivolivre.mongocom.annotations.Index;
 import com.arquivolivre.mongocom.utils.Generator;
 import com.mongodb.BasicDBList;
+import com.mongodb.DBCollection;
 import com.mongodb.Mongo;
 import com.mongodb.WriteConcern;
 import java.io.Closeable;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
+import java.util.Iterator;
+import java.util.Map;
+import java.util.Set;
+import java.util.TreeMap;
 import org.bson.types.BasicBSONList;
 
 /**
@@ -259,6 +265,7 @@ public final class CollectionManager implements Closeable {
                 field.setAccessible(true);
                 field.set(document, _id);
             }
+            indexFields(document);
         } catch (InstantiationException | NoSuchMethodException | InvocationTargetException | IllegalAccessException | SecurityException | IllegalArgumentException | NoSuchFieldException ex) {
             LOG.log(Level.SEVERE, "An error occured while inserting this document: {0}", ex.getMessage());
         }
@@ -304,6 +311,7 @@ public final class CollectionManager implements Closeable {
             String collectionName = reflectCollectionName(document);
             db.getCollection(collectionName).save(obj);
             _id = obj.getString("_id");
+            indexFields(document);
         } catch (InstantiationException | IllegalAccessException | IllegalArgumentException | InvocationTargetException | NoSuchMethodException | SecurityException ex) {
             LOG.log(Level.SEVERE, "An error occured while saving this document: {0}", ex.getMessage());
         }
@@ -311,6 +319,66 @@ public final class CollectionManager implements Closeable {
             LOG.log(Level.INFO, "Object \"{0}\" saved successfully.", _id);
         }
         return _id;
+    }
+
+    private void indexFields(Object document) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException {
+        String collectionName = reflectCollectionName(document);
+        Field[] fields = getFieldsByAnnotation(document, Index.class);
+        Map<String, List<String>> compoundIndexes = new TreeMap<>();
+        BasicDBObject compoundIndexesOpt = new BasicDBObject("background", true);
+        DBCollection collection = db.getCollection(collectionName);
+        for (Field field : fields) {
+            Annotation annotation = field.getAnnotation(Index.class);
+            BasicDBObject options = new BasicDBObject();
+            BasicDBObject indexKeys = new BasicDBObject();
+            String indexName = (String) annotation.annotationType().getMethod("value").invoke(annotation);
+            String type = (String) annotation.annotationType().getMethod("type").invoke(annotation);
+            boolean unique = (boolean) annotation.annotationType().getMethod("unique").invoke(annotation);
+            boolean sparse = (boolean) annotation.annotationType().getMethod("sparse").invoke(annotation);
+            boolean dropDups = (boolean) annotation.annotationType().getMethod("dropDups").invoke(annotation);
+            boolean background = (boolean) annotation.annotationType().getMethod("background").invoke(annotation);
+            int order = (int) annotation.annotationType().getMethod("order").invoke(annotation);
+            if (!indexName.equals("")) {
+                options.append("name", indexName);
+            }
+            options.append("background", background);
+            options.append("unique", unique);
+            options.append("sparse", sparse);
+            options.append("dropDups", dropDups);
+            String fieldName = field.getName();
+            if (indexName.equals("") && type.equals("")) {
+                indexKeys.append(fieldName, order);
+                collection.ensureIndex(indexKeys, options);
+            } else if (!indexName.equals("") && type.equals("")) {
+                List<String> result = compoundIndexes.get(indexName);
+                if (result == null) {
+                    result = new ArrayList<>();
+                    compoundIndexes.put(indexName, result);
+                }
+                result.add(fieldName + "_" + order);
+            } else if (!type.equals("")) {
+                indexKeys.append(fieldName, type);
+                collection.ensureIndex(indexKeys, compoundIndexesOpt);
+            }
+        }
+        Set<String> keys = compoundIndexes.keySet();
+        for (String key : keys) {
+            BasicDBObject keysObj = new BasicDBObject();
+            compoundIndexesOpt.append("name", key);
+            for (String value : compoundIndexes.get(key)) {
+                boolean with_ = false;
+                if (value.startsWith("_")) {
+                    value = value.replaceFirst("_", "");
+                    with_ = true;
+                }
+                String[] opt = value.split("_");
+                if (with_) {
+                    opt[0] = "_" + opt[0];
+                }
+                keysObj.append(opt[0], Integer.parseInt(opt[1]));
+            }
+            collection.ensureIndex(keysObj, compoundIndexesOpt);
+        }
     }
 
     private BasicDBObject loadDocument(Object document) throws SecurityException, InstantiationException, InvocationTargetException, NoSuchMethodException {
@@ -475,7 +543,7 @@ public final class CollectionManager implements Closeable {
         if ((update && (oldValue != null)) || (oldValue == null)) {
             return g.generateValue(field.getDeclaringClass(), db);
         } else if (oldValue instanceof Number) {
-            
+
             boolean test = oldValue.equals(oldValue.getClass().cast(0));
             if (test) {
                 return g.generateValue(field.getDeclaringClass(), db);

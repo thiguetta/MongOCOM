@@ -42,6 +42,10 @@ public final class CollectionManagerFactory {
     private static final String[] FILES = {"application", "database"};
     private static final String[] EXTENTIONS = {".conf", ".config", ".properties"};
 
+    /**
+     * Create a <code>CollectionManager</code>
+     * @return an instance of a <code>CollectionManager</code>.
+     */
     public static CollectionManager createCollectionManager() {
         return createBaseCollectionManager("", 0, "", "", "");
     }
@@ -84,6 +88,25 @@ public final class CollectionManagerFactory {
         return null;
     }
 
+    /**
+     * Create an instance of <code>Mongo</code> based on the information
+     * provided in the configuration files, if the instance has already been
+     * created using the same information, so it uses the same instance.
+     *
+     * @return an instance of a <code>CollectionManager</code>.
+     */
+    public static CollectionManager setup() {
+        return setup(null);
+    }
+
+    /**
+     * Create an instance of <code>Mongo</code> based on the information
+     * provided in the configuration files located into <code>WEB-INF/conf</code>, if the instance has already been
+     * created using the same information, so it uses the same instance.
+     *
+     * @param context <code>ServletContext</code> of a web application.
+     * @return an instance of a <code>CollectionManager</code>.
+     */
     public static CollectionManager setup(ServletContext context) {
         try {
             File props = getPropertiesFile(context);

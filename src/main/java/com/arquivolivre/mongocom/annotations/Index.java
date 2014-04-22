@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.arquivolivre.mongocom.annotations;
 
-import com.arquivolivre.mongocom.types.IndexOrder;
+import com.arquivolivre.mongocom.types.IndexType;
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -30,12 +29,18 @@ import java.lang.annotation.Target;
 @Target(ElementType.FIELD)
 public @interface Index {
 
-    String name() default "";
+    String value() default "";
 
     boolean unique() default false;
-    
+
     boolean sparse() default false;
 
-    IndexOrder order() default IndexOrder.INDEX_ASCENDING;
+    boolean dropDups() default false;
+
+    boolean background() default true;
+
+    int order() default IndexType.INDEX_ASCENDING;
+
+    String type() default "";
 
 }
