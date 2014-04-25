@@ -42,7 +42,6 @@ import java.io.Closeable;
 import java.lang.reflect.Method;
 import java.lang.reflect.ParameterizedType;
 import java.lang.reflect.Type;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.Set;
 import java.util.TreeMap;
@@ -220,7 +219,7 @@ public final class CollectionManager implements Closeable {
      *
      * @param <A> generic type of the collection.
      * @param collectionClass
-     * @param id
+     * @param id the <code>String</code> correnponding the <code>ObjectId</code> of a stored document
      * @return a document.
      */
     public <A extends Object> A findById(Class<A> collectionClass, String id) {
@@ -246,7 +245,7 @@ public final class CollectionManager implements Closeable {
     /**
      * Insert the document in a collection
      *
-     * @param document
+     * @param document to be inserted.
      * @return the <code>_id</code> of the inserted document, <code>null</code>
      * if fails.
      */
@@ -297,6 +296,11 @@ public final class CollectionManager implements Closeable {
         update(query, document, false, true);
     }
 
+    /**
+     * Insert a document or update it if it already exists (it means has the same <code>ObjectId</code> of an existing document).
+     * @param document to be inserted or updated
+     * @return the _id of the saved document.
+     */
     public String save(Object document) {
         //TODO: a better way to throw/treat exceptions
         /*if (!document.getClass().isAnnotationPresent(Document.class)) {
@@ -389,7 +393,8 @@ public final class CollectionManager implements Closeable {
                 field.setAccessible(true);
                 String fieldName = field.getName();
                 Object fieldContent = field.get(document);
-                if (fieldContent == null && !field.isAnnotationPresent(GeneratedValue.class)) {
+                boolean isGeneratedField = (field.isAnnotationPresent(GeneratedValue.class) || field.isAnnotationPresent(Id.class));
+                if (fieldContent == null && !isGeneratedField) {
                     continue;
                 }
                 if (fieldContent instanceof List) {
@@ -409,8 +414,8 @@ public final class CollectionManager implements Closeable {
                     obj.append(fieldName, new org.bson.types.ObjectId(save(fieldContent)));
                 } else if (field.isAnnotationPresent(Internal.class)) {
                     obj.append(fieldName, loadDocument(fieldContent));
-                } else if (field.isAnnotationPresent(Id.class) && !fieldContent.equals("")) {
-                    obj.append(fieldName, reflectId(field));
+                } else if (field.isAnnotationPresent(Id.class)) {
+                    obj.append(fieldName, reflectId(field, fieldContent));
                 } else if (field.isAnnotationPresent(GeneratedValue.class)) {
                     Object value = reflectGeneratedValue(field, fieldContent);
                     if (value != null) {
@@ -491,6 +496,7 @@ public final class CollectionManager implements Closeable {
         return fieldsAnnotated.toArray(fields);
     }
 
+    //TODO: trigger methods before or after an event
     private void invokeAnnotatedMethods(Object obj, Class<? extends Annotation> annotationClass) {
         Method[] methods = getMethodsByAnnotation(obj, annotationClass);
         for (Method method : methods) {
@@ -523,18 +529,19 @@ public final class CollectionManager implements Closeable {
         return coll;
     }
 
-    private <A extends Object> A reflectId(Field field) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, InstantiationException {
+    private <A extends Object> A reflectId(Field field, A oldValue) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, InstantiationException {
         Annotation annotation = field.getAnnotation(Id.class);
         Boolean autoIncrement = (Boolean) annotation.annotationType().getMethod("autoIncrement").invoke(annotation);
         Class generator = (Class) annotation.annotationType().getMethod("generator").invoke(annotation);
-        if (autoIncrement) {
+        boolean isZero = (oldValue instanceof Number) && oldValue.equals(oldValue.getClass().cast(0));
+        if (autoIncrement && ((oldValue == null) || isZero)) {
             Generator g = (Generator) generator.newInstance();
             return g.generateValue(field.getDeclaringClass(), db);
         }
-        return null;
+        return oldValue;
     }
 
-    private <A extends Object> A reflectGeneratedValue(Field field, Object oldValue) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, InstantiationException {
+    private <A extends Object> A reflectGeneratedValue(Field field, A oldValue) throws NoSuchMethodException, IllegalAccessException, IllegalArgumentException, InvocationTargetException, InstantiationException {
         Annotation annotation = field.getAnnotation(GeneratedValue.class);
         Class<? extends Annotation> annotationType = annotation.annotationType();
         Boolean update = (Boolean) annotationType.getMethod("update").invoke(annotation);
@@ -544,14 +551,14 @@ public final class CollectionManager implements Closeable {
             return g.generateValue(field.getDeclaringClass(), db);
         } else if (oldValue instanceof Number) {
 
-            boolean test = oldValue.equals(oldValue.getClass().cast(0));
-            if (test) {
+            boolean isZero = oldValue.equals(oldValue.getClass().cast(0));
+            if (isZero) {
                 return g.generateValue(field.getDeclaringClass(), db);
             } else if (update) {
                 return g.generateValue(field.getDeclaringClass(), db);
             }
         }
-        return null;
+        return oldValue;
     }
 
     public String getStatus() {
