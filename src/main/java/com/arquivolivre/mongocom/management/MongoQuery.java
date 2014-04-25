@@ -18,7 +18,6 @@ package com.arquivolivre.mongocom.management;
 import com.mongodb.BasicDBList;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
-import com.mongodb.QueryBuilder;
 import java.util.List;
 import org.bson.types.ObjectId;
 
@@ -26,7 +25,7 @@ import org.bson.types.ObjectId;
  *
  * @author Thiago da Silva Gonzaga <thiagosg@sjrp.unesp.br>.
  */
-public final class MongoQuery extends QueryBuilder{
+public final class MongoQuery {
 
     private BasicDBObject query;
     private BasicDBObject constraits;
@@ -38,6 +37,15 @@ public final class MongoQuery extends QueryBuilder{
 
     public MongoQuery() {
         query = new BasicDBObject();
+    }
+
+    public MongoQuery(DBObject query) {
+        this.query = (BasicDBObject) query;
+    }
+
+    public MongoQuery(DBObject query, DBObject constraits) {
+        this.query = (BasicDBObject) query;
+        this.constraits = (BasicDBObject) constraits;
     }
 
     public MongoQuery(String field, Object value) {

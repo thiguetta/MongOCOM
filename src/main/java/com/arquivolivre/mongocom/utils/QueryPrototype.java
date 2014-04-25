@@ -15,70 +15,49 @@
  */
 package com.arquivolivre.mongocom.utils;
 
+import com.arquivolivre.mongocom.exceptions.MalformedQueryExeption;
+import java.util.List;
+
 /**
  *
  * @author Thiago da Silva Gonzaga <thiagosg@sjrp.unesp.br>
  */
-public class QueryPrototype {
+public interface QueryPrototype {
 
-    public static void select(String... fields) {
+    <A extends Object> Object execute() throws MalformedQueryExeption;
 
-    }
+    List<?> executeFind() throws MalformedQueryExeption;
 
-    public static void from(Class<?> collection) {
+    QueryPrototype select(String... fields);
+    
+    QueryPrototype selectRemovingFiedls(String... fields);
 
-    }
+    QueryPrototype from(Class<?> collection);
 
-    public static void where(String field) {
+    QueryPrototype where(String field);
 
-    }
+    QueryPrototype equalsTo(Object value);
 
-    public static void equalsTo(Object value) {
+    QueryPrototype notEqualsTo(Object value);
 
-    }
+    QueryPrototype graterThan(Object value);
 
-    public static void notEqualsTo(Object value) {
+    QueryPrototype lessThan(Object value);
 
-    }
+    QueryPrototype greaterThanOrEqualTo(Object value);
 
-    public static void graterThan(Object value) {
+    QueryPrototype lessThanOrEqualTo(Object valu);
 
-    }
+    QueryPrototype and(String field);
 
-    public static void lessThan(Object value) {
+    QueryPrototype or(String field);
 
-    }
+    QueryPrototype exists();
 
-    public static void greaterThanOrEqualTo(Object value) {
+    QueryPrototype doesntExist();
 
-    }
+    QueryPrototype in(Object... values);
 
-    public static void lessThanOrEqualTo(Object valu) {
-
-    }
-
-    public static void and(String field) {
-
-    }
-
-    public static void or(String field) {
-
-    }
-
-    public static void exists() {
-
-    }
-
-    public static void notExists() {
-
-    }
-
-    public static void in(Object... values) {
-
-    }
-
-    public static void notIn(Object... values) {
-
-    }
+    QueryPrototype notIn(Object... values);
 
 }

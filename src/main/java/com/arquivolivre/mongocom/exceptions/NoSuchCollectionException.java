@@ -3,17 +3,16 @@
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-
 package com.arquivolivre.mongocom.exceptions;
 
 /**
  *
  * @author thiago
  */
-public class NoSuchMongoCollectionException extends Exception{
+public class NoSuchCollectionException extends MongOCOMException {
 
-    public NoSuchMongoCollectionException(String message) {
+    public NoSuchCollectionException(String message) {
         super(message);
     }
-    
+
 }
