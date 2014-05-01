@@ -19,6 +19,7 @@ import com.arquivolivre.mongocom.exceptions.MalformedQueryExeption;
 import com.arquivolivre.mongocom.management.CollectionManager;
 import com.arquivolivre.mongocom.management.MongoQuery;
 import com.mongodb.BasicDBList;
+import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.mongodb.QueryBuilder;
 import java.util.List;
@@ -30,6 +31,8 @@ import java.util.List;
 public class Query extends QueryBuilder implements QueryPrototype {
 
     private DBObject retrivedFields;
+    private DBObject setFields;
+    private boolean isUpdate;
     private String currentKey;
     private Class<?> collectionClass;
     private CollectionManager cm;
@@ -63,6 +66,26 @@ public class Query extends QueryBuilder implements QueryPrototype {
             throw new MalformedQueryExeption("No collection defined.");
         }
         return cm.find(collectionClass, new MongoQuery(get(), retrivedFields));
+    }
+
+    public void executeUpdate() {
+
+    }
+
+    public Query update() {
+        isUpdate = true;
+        return this;
+    }
+
+    public Query set(String field, Object newValue) {
+        if (setFields == null) {
+            setFields = new BasicDBObject();
+            setFields.put("$set", new BasicDBObject(field, newValue));
+        } else {
+            DBObject o = (DBObject) setFields.get("$set");
+            o.put(field, newValue);
+        }
+        return this;
     }
 
     @Override
